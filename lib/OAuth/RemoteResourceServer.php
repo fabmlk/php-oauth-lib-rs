@@ -256,7 +256,7 @@ class RemoteResourceServer
 
 }
 
-class RemoteResourceServerException extends Exception
+class RemoteResourceServerException extends \Exception
 {
     private $_description;
     private $_responseCode;

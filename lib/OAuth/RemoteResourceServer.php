@@ -119,11 +119,11 @@ class RemoteResourceServer
         if (!$this->_isVerified) {
             $this->_handleException("internal_server_error", "verify method needs to be requested first");
         }
-        if (!array_key_exists("entitlement", $this->_resourceOwnerAttributes)) {
+        if (!array_key_exists('eduPersonEntitlement', $this->_resourceOwnerAttributes)) {
             return array();
         }
 
-        return $this->_resourceOwnerAttributes['entitlement'];
+        return $this->_resourceOwnerAttributes['eduPersonEntitlement'];
     }
 
     public function hasScope($scope)
@@ -157,11 +157,11 @@ class RemoteResourceServer
         if (!$this->_isVerified) {
             $this->_handleException("internal_server_error", "verify method needs to be requested first");
         }
-        if (!array_key_exists("entitlement", $this->_resourceOwnerAttributes)) {
+        if (!array_key_exists('eduPersonEntitlement', $this->_resourceOwnerAttributes)) {
             return FALSE;
         }
 
-        return in_array($entitlement, $this->_resourceOwnerAttributes['entitlement']);
+        return in_array($entitlement, $this->_resourceOwnerAttributes['eduPersonEntitlement']);
     }
 
     public function requireEntitlement($entitlement)

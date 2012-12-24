@@ -86,6 +86,12 @@ class RemoteResourceServer
         ));
 
         $output = curl_exec($curlChannel);
+
+        if (FALSE === $output) {
+            $error = curl_error($curlChannel);
+            $this->_handleException("internal_server_error", "cURL error while talking to tokenInfoEndpoint: $error");
+        }
+
         $httpCode = curl_getinfo($curlChannel, CURLINFO_HTTP_CODE);
         curl_close($curlChannel);
 

@@ -174,6 +174,27 @@ class RemoteResourceServer
         }
     }
 
+    /**
+     * At least one of the scopes should be granted
+     *
+     * @param array $scope the list of scopes of which one
+     *                                       should be granted
+     * @throws RemoteResourceServerException if not at least one of the provided
+     *                                       scopes was granted
+     */
+    public function requireAnyScope(array $scope)
+    {
+        if (!$this->_isVerified) {
+            $this->_handleException("internal_server_error", "verify method needs to be requested first");
+        }
+        foreach ($scope as $s) {
+            if (TRUE === $this->hasScope($s)) {
+                return;
+            }
+        }
+        $this->_handleException("insufficient_scope", "no permission for this call with granted scope");
+    }
+
     public function hasEntitlement($entitlement)
     {
         if (!$this->_isVerified) {

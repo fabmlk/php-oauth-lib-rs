@@ -77,8 +77,17 @@ class RemoteResourceServer
         $getParameters["access_token"] = $accessToken;
 
         $curlChannel = curl_init();
+
+        $tokenInfoUrl = $this->_getRequiredConfigParameter("tokenInfoEndpoint");
+        if (0 !== strpos($tokenInfoUrl, "file://")) {
+            $separator = (FALSE === strpos($tokenInfoUrl, "?")) ? "?" : "&";
+            $tokenInfoUrl .= $separator . http_build_query($getParameters);
+        } else {
+            // file cannot have query parameter, use accesstoken as file instead
+            $tokenInfoUrl .= $accessToken . ".json";
+        }
         curl_setopt_array($curlChannel, array (
-            CURLOPT_URL => $this->_getRequiredConfigParameter("tokenInfoEndpoint") . "?" . http_build_query($getParameters),
+            CURLOPT_URL => $tokenInfoUrl,
             //CURLOPT_FOLLOWLOCATION => 1,
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_SSL_VERIFYPEER => 1,
@@ -95,8 +104,11 @@ class RemoteResourceServer
         $httpCode = curl_getinfo($curlChannel, CURLINFO_HTTP_CODE);
         curl_close($curlChannel);
 
-        if (200 !== $httpCode) {
-            $this->_handleException("invalid_token", "the access token is not valid");
+        if (0 !== strpos($tokenInfoUrl, "file://")) {
+            // not a file
+            if (200 !== $httpCode) {
+                $this->_handleException("invalid_token", "the access token is not valid");
+            }
         }
 
         $token = json_decode($output, TRUE);

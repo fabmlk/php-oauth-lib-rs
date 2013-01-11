@@ -51,7 +51,31 @@ class RemoteResourceServer
         $headerKeys = array_keys($apacheHeaders);
         $keyPositionInArray = array_search(strtolower("Authorization"), array_map('strtolower', $headerKeys));
         $authorizationHeader = (FALSE !== $keyPositionInArray) ? $apacheHeaders[$headerKeys[$keyPositionInArray]] : NULL;
-        $this->verifyAuthorizationHeader($authorizationHeader);
+        $this->verifyAuthorization($authorizationHeader, $_GET);
+    }
+
+    public function verifyAuthorization($authorizationHeader = NULL, array $queryParameters = NULL)
+    {
+        // FIXME: only one authorization mechanism should be allowed
+        if (NULL !== $authorizationHeader) {
+            $this->verifyAuthorizationHeader($authorizationHeader);
+
+            return;
+        }
+        if (array_key_exists('access_token', $queryParameters)) {
+            $this->verifyQueryParameter($queryParameters);
+
+            return;
+        }
+        $this->_handleException("no_token", "no access token provided");
+    }
+
+    public function verifyQueryParameter(array $queryParameters)
+    {
+        if (!array_key_exists('access_token', $queryParameters)) {
+            $this->_handleException("no_token", "no access token in query parameter");
+        }
+        $this->verifyBearerToken($queryParameters['access_token']);
     }
 
     /**
@@ -63,7 +87,7 @@ class RemoteResourceServer
     public function verifyAuthorizationHeader($authorizationHeader)
     {
         if (NULL === $authorizationHeader) {
-            $this->_handleException("no_token", "no authorization header in the request");
+            $this->_handleException("no_token", "no authorization header");
         }
         // b64token = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"="
         $b64TokenRegExp = '(?:[[:alpha:][:digit:]-._~+/]+=*)';
@@ -72,7 +96,11 @@ class RemoteResourceServer
             $this->_handleException("invalid_token", "the access token is malformed");
         }
         $accessToken = $matches['value'];
+        $this->verifyBearerToken($accessToken);
+    }
 
+    public function verifyBearerToken($accessToken)
+    {
         $getParameters = array();
         $getParameters["access_token"] = $accessToken;
 

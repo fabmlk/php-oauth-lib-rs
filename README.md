@@ -27,7 +27,7 @@ Using the library is straightforward:
     $rs = new RemoteResourceServer($config);
     $rs->verifyRequest();
 
-Onlt the `tokenInfoEndpoint` configuration parameter is required, the others
+Only the `tokenInfoEndpoint` configuration parameter is required, the others
 are optional:
 
 * `tokenInfoEndpoint` - specify the location at which to verify the OAuth token;
@@ -46,3 +46,7 @@ about the resource owner and client.
 * `getScope()` (the scope granted to the client accessing this resource)
 * `getEntitlement()` (the entitlement the resource owner has when accessing this 
   resource)
+
+Note that the `getAttributes()` and `getEntitlement()` methods are not supported
+by all authorization servers and is a properietary extension to 
+[https://github.com/fkooman/php-oauth](php-oauth).

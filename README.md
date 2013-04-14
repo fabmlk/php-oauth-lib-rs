@@ -32,14 +32,50 @@ are optional:
 
 * `tokenInfoEndpoint` - specify the location at which to verify the OAuth token;
 * `resourceServerRealm` - specify the "realm" of the RS that is used when 
-  returning errors to the client using the `WWW-Authenticate` header;
+  returning errors to the client using the `WWW-Authenticate` header. Default 
+  value is `Resource Server`;
 * `throwException` - throw a `RemoteResourceServerException` instead of handling 
   the failure in the library by sending a response back to the client. This is 
   useful if you want to integrate the library in your own framework, you can
-  use the information from the exception to craft your own response.
+  use the information from the exception to craft your own response. Default
+  value is `FALSE`.
 
-After the `verifyRequest()` some methods are available to retrieve information
-about the resource owner and client.
+## Verify Tokens
+If you write a simple piece of software that does not use any framework for 
+handling HTTP requests and responses you can use the following method to handle
+all communication with the client by itself:
+
+    verifyRequest()
+    
+This will extract the Bearer Authorization header or `access_token` query 
+parameter, verify it at the authorization server and inform the client about
+any problems.
+
+If you use a HTTP framework some other methods are available to help you verfiy
+tokens:
+
+    verifyAuthorization($authorizationHeader, array $queryParameters)
+    verifyAuthorizationHeader($authorizationHeader)
+    verifyQueryParameter(array $queryParameters)
+    
+The `verifyAuthorization` method can check both the HTTP `Authorization` header 
+value and the query parameters, in particular the `access_token` query 
+parameter.
+
+The `verifyAuthorizationHeader` method checks just feed the `Authorization` 
+header.
+
+The `verifyQueryParameter` method will check the query parameters that are 
+provided.
+
+If you use a framework, also make sure to set the `throwException` field to 
+`TRUE` and catch the `RemoteResourceOwnerException` exception and deal with 
+it accordingly.
+
+## Retrieve Resource Owner Information
+After the `verifyRequest()`, or any of the other verify functions, some methods 
+are available to retrieve information about the resource owner and client 
+assuming the verification was successful.
 
 * `getResourceOwnerId()` (the unique resource owner identifier)
 * `getAttributes()` (additional attributes associated with the resource owner)

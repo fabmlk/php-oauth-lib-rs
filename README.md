@@ -19,7 +19,7 @@ Using the library is straightforward:
     use \OAuth\RemoteResourceServer as RemoteResourceServer;
 
     $config = array(
-        "introspectionEndpoint" => "http://localhost/php-oauth/tokeninfo.php",
+        "introspectionEndpoint" => "http://localhost/php-oauth/introspect.php",
         "realm" => "My Demo Resource Server"
     );
 

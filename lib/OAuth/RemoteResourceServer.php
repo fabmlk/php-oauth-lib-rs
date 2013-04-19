@@ -48,20 +48,43 @@ class RemoteResourceServer
     public function verifyRequest()
     {
         try {
-            // FIXME: check if the function apache_request_headers exists!
-            // FIXME: check $_SERVER['X-AUTHORIZATION'] as well
-            $apacheHeaders = apache_request_headers();
-            $headerKeys = array_keys($apacheHeaders);
-            $keyPositionInArray = array_search(strtolower("Authorization"), array_map('strtolower', $headerKeys));
-            $authorizationHeader = (FALSE !== $keyPositionInArray) ? $apacheHeaders[$headerKeys[$keyPositionInArray]] : NULL;
-            // FIXME: function below does not exist anymore!
-            if (NULL !== $authorizationHeader) {
-                return $this->verifyAuthorizationHeader($authorizationHeader);
+            $headerBearerToken = NULL;
+            $queryBearerToken = NULL;
+
+            // look for headers
+            if (function_exists("apache_request_headers")) {
+                $headers = apache_request_headers();
+            } elseif (isset($_SERVER)) {
+                $headers = $_SERVER;
+            } else {
+                $headers = NULL;
             }
-            if (is_array($_GET) && isset($_GET['access_token'])) {
-                return $this->verifyQueryParameter($_GET);
+
+            if (NULL !== $headers) {
+                // FIXME: also look for "X-Authorization"
+                $headerKeys = array_keys($headers);
+                $keyPositionInArray = array_search(strtolower("Authorization"), array_map('strtolower', $headerKeys));
+                $authorizationHeader = (FALSE !== $keyPositionInArray) ? $headers[$headerKeys[$keyPositionInArray]] : NULL;
+                $headerBearerToken = self::extractBearerTokenFromAuthorizationHeader($authorizationHeader);
             }
-            throw new RemoteResourceServerException("no_token","no bearer token provided");
+
+            // look for query parameters
+            if (isset($_GET) && is_array($_GET) && isset($_GET['access_token'])) {
+                $queryBearerToken = $_GET['access_token'];
+            }
+
+            // no bearer token
+            if (NULL === $headerBearerToken && NULL === $queryBearerToken) {
+                throw new RemoteResourceServerException("no_token", "missing token");
+            }
+            // two tokens
+            if (NULL !== $headerBearerToken && NULL !== $queryBearerToken) {
+                // FIXME: double!
+                throw new RemoteResourceServerException("invalid_request", "more than one method for including an access token used");
+            }
+
+            // only one, good
+            return NULL !== $headerBearerToken ? $this->verifyBearerToken($headerBearerToken) : $this->verifyBearerToken($queryBearerToken);
 
         } catch (RemoteResourceServerException $e) {
             // send response directly to client, halt execution of calling script as well
@@ -73,6 +96,15 @@ class RemoteResourceServer
         }
     }
 
+    public static function extractBearerTokenFromAuthorizationHeader($authorizationHeader)
+    {
+        if (0 !== strpos($authorizationHeader, "Bearer ")) {
+            return NULL;
+        }
+
+        return substr($authorizationHeader, 7);
+    }
+
     /**
      * Verify the Authorization Bearer token.
      *
@@ -81,25 +113,10 @@ class RemoteResourceServer
      */
     public function verifyAuthorizationHeader($authorizationHeader)
     {
-        if (0 !== strpos($authorizationHeader, "Bearer ")) {
-            throw new RemoteResourceServerException("invalid_request", "no bearer token type in authorization header");
-        }
-        $token = substr($authorizationHeader, 7);
-
-        return $this->_verifyBearerToken($token);
+        return $this->verifyBearerToken(self::extractBearerTokenFromAuthorizationHeader($authorizationHeader));
     }
 
-    public function verifyQueryParameter(array $queryParameters)
-    {
-        $token = isset($queryParameters['access_token']) ? $queryParameters['access_token'] : NULL;
-        if (NULL === $token) {
-            throw new RemoteResourceServerException("invalid_request", "no bearer token in query parameters");
-        }
-
-        return $this->_verifyBearerToken($token);
-    }
-
-    private function _verifyBearerToken($token)
+    public function verifyBearerToken($token)
     {
         // b64token = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"="
         if ( 1 !== preg_match('|^[[:alpha:][:digit:]-._~+/]+=*$|', $token)) {

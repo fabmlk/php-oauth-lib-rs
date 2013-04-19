@@ -1,0 +1,9 @@
+{
+    "active": true, 
+    "client_id": "testclient", 
+    "expires_at": 1366377846, 
+    "issued_at": 1366376612, 
+    "scope": "foo bar", 
+    "sub": "fkooman", 
+    "x-entitlement": "urn:x-foo:service:access urn:x-bar:privilege:admin"
+}

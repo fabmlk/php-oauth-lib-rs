@@ -56,11 +56,13 @@ class RemoteResourceServer
             $authorizationHeader = (FALSE !== $keyPositionInArray) ? $apacheHeaders[$headerKeys[$keyPositionInArray]] : NULL;
             // FIXME: function below does not exist anymore!
             if (NULL !== $authorizationHeader) {
-                $this->verifyAuthorizationHeader($authorizationHeader);
+                return $this->verifyAuthorizationHeader($authorizationHeader);
             }
-            if (is_array($_GET)) {
-                $this->verifyQueryParameter($_GET);
+            if (is_array($_GET) && isset($_GET['access_token'])) {
+                return $this->verifyQueryParameter($_GET);
             }
+            throw new RemoteResourceServerException("no_token","no bearer token provided");
+
         } catch (RemoteResourceServerException $e) {
             // send response directly to client, halt execution of calling script as well
             $e->setRealm($this->_getRequiredConfigParameter("realm"));
@@ -79,11 +81,12 @@ class RemoteResourceServer
      */
     public function verifyAuthorizationHeader($authorizationHeader)
     {
-        if (0 !== strpos("Bearer ", $authorizationHeader)) {
-            throw new RemoteResourceServerException("invalid_request", "no bearer token in authorization header");
+        if (0 !== strpos($authorizationHeader, "Bearer ")) {
+            throw new RemoteResourceServerException("invalid_request", "no bearer token type in authorization header");
         }
         $token = substr($authorizationHeader, 7);
-        $this->_verifyBearerToken($token);
+
+        return $this->_verifyBearerToken($token);
     }
 
     public function verifyQueryParameter(array $queryParameters)
@@ -92,7 +95,8 @@ class RemoteResourceServer
         if (NULL === $token) {
             throw new RemoteResourceServerException("invalid_request", "no bearer token in query parameters");
         }
-        $this->_verifyBearerToken($token);
+
+        return $this->_verifyBearerToken($token);
     }
 
     private function _verifyBearerToken($token)
@@ -109,7 +113,7 @@ class RemoteResourceServer
 
         if (0 !== strpos($introspectionEndpoint, "file://")) {
             $separator = (FALSE === strpos($introspectionEndpoint, "?")) ? "?" : "&";
-            $introspectionEndpoint .= $separator . http_build_query($getParameters);
+            $introspectionEndpoint .= $separator . http_build_query($get);
         } else {
             // file cannot have query parameter, use accesstoken as JSON file instead
             $introspectionEndpoint .= $token . ".json";
@@ -151,7 +155,7 @@ class RemoteResourceServer
             throw new RemoteResourceServerException("invalid_token", "the token is not active");
         }
 
-        return new TokenIntrospection($output);
+        return new TokenIntrospection($data);
     }
 
     private function _getRequiredConfigParameter($key)
@@ -171,7 +175,7 @@ class TokenIntrospection
     public function __construct(array $response)
     {
         if (!isset($response['active']) || !is_bool($response['active'])) {
-            throw new TokenIntrospectionException("invalid introspection data");
+            throw new RemoteResourceServerException("internal_server_error", "malformed response from introspection endpoint");
         }
         $this->_response = $response;
     }
@@ -247,7 +251,7 @@ class TokenIntrospection
         return isset($this->_response[$key]) ? $this->_response[$key] : FALSE;
     }
 
-    /* ADDITIONAL HELPER FUNCTIONS */
+    /* ADDITIONAL HELPER METHODS */
 
     public function getResourceOwnerId()
     {
@@ -272,6 +276,13 @@ class TokenIntrospection
         return in_array($scope, $this->getScopeAsArray());
     }
 
+    public function requireScope($scope)
+    {
+        if (FALSE === $this->hasScope($scope)) {
+            throw new RemoteResourceServerException("insufficient_scope", "no permission for this call with granted scope");
+        }
+    }
+
     /**
      * At least one of the scopes should be granted.
      *
@@ -290,6 +301,7 @@ class TokenIntrospection
         return FALSE;
     }
 
+    /* PROPRIETARY EXTENSION "X-ENTITLEMENT" */
     public function getEntitlement()
     {
         return $this->_getKeyValue('x-entitlement');
@@ -313,10 +325,12 @@ class TokenIntrospection
         return in_array($entitlement, $this->getEntitlementAsArray());
     }
 
-}
-
-class TokenIntrospectionException extends \Exception
-{
+    public function requireEntitlement($scope)
+    {
+        if (FALSE === $this->hasEntitlement($scope)) {
+            throw new RemoteResourceServerException("insufficient_scope", "no permission for this call with granted entitlement");
+        }
+    }
 }
 
 class RemoteResourceServerException extends \Exception

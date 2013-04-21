@@ -14,7 +14,7 @@ Licensed under the Apache License, Version 2.0;
 Using the library is straightforward:
 
     <?php
-    require_once 'extlib/php-lib-remote-rs/lib/OAuth/RemoteResourceServer.php';
+    require_once 'lib/OAuth/RemoteResourceServer.php';
 
     use \OAuth\RemoteResourceServer as RemoteResourceServer;
 
@@ -24,7 +24,7 @@ Using the library is straightforward:
     );
 
     $rs = new RemoteResourceServer($config);
-    $introspection = $rs->verifyRequest();
+    $introspection = $rs->verifyAndHandleRequest();
 
     echo $introspection->getSub();  // resourceOwnerId
 
@@ -41,22 +41,23 @@ If you write a simple piece of software that does not use any framework for
 handling HTTP requests and responses you can use the following method to handle
 all communication with the client by itself:
 
-    verifyRequest()
+    verifyAndHandleRequest()
     
 This will extract the Bearer Authorization header or `access_token` query 
-parameter, verify it at the introspection endpoint and inform the client about
-any problems.
+parameter, verify it at the introspection endpoint and inform the client 
+directly about any problems.
 
-If you use a HTTP framework some other methods are available to help you verfiy
+If you use a HTTP framework an other method is available to help you verify
 tokens:
 
-    verifyAuthorizationHeader($authorizationHeader)
-    verifyQueryParameter(array $queryParameters)
+    verifyRequest(array $requestHeaders, array $queryParameters)
     
-The `verifyAuthorizationHeader` method checks the `Authorization` header 
-provided.
-
-The `verifyQueryParameter` method checks the query parameters provided.
+You can specify an array with request headers and an array with query 
+parameters. You can just feed the library all request headers and query 
+parameters as only the relevant `Authorization` and/or `access_token` 
+query parameter are evaluated. If the client provides both an `Authorization` 
+header and an `access_token` query parameter an error will be returned as it 
+is not allowed to specify both methods simultaneously.
 
 ## Retrieve Resource Owner Information
 After the `verifyRequest()`, or any of the other verify functions, some methods 
@@ -71,3 +72,46 @@ assuming the verification was successful.
 Note that the `getEntitlement()` methods is not supported by all authorization 
 servers and is a properietary extension to 
 [https://github.com/fkooman/php-oauth](php-oauth).
+
+## Exceptions
+The library will return exceptions when using the `verifyRequest` method, you
+can catch these exceptions and send the appropriate response to the client
+using your own (HTTP) framework.
+
+The exception provides some helper methods to help with constructing a response
+for the client:
+
+* `getResponseCode()`
+* `getAuthenticateHeader()`
+* `setRealm($realm)`
+* `getContent()`
+
+The `getResponseCode()` method will get you the (integer) HTTP response code
+to send to the client. The method `setRealm($realm)` allows you to set the 
+"realm" that will be part of the `WWW-Authenticate` header you can retrieve
+with the `getAuthenticateHeader()` method. The `getContent()` method gives you
+a `JSON` formatted response you can send back to the client, this is OPTIONAL.
+
+Here is an example on how to use this library with your own exception handling:
+
+    <?php
+    require_once 'lib/OAuth/RemoteResourceServer.php';
+
+    use \OAuth\RemoteResourceServer as RemoteResourceServer;
+    use \OAuth\RemoteResourceServerException as RemoteResourceServerException;
+
+    $config = array(
+        "introspectionEndpoint" => "http://localhost/php-oauth/introspect.php",
+    );
+
+    try {
+        $rs = new RemoteResourceServer($config);
+        $introspection = $rs->verifyRequest(apache_request_headers(), $_GET);
+        echo $introspection->getSub();
+    } catch (RemoteResourceServerException $e) {
+        $e->setRealm("Foo");
+        header("HTTP/1.1 " . $e->getResponseCode());
+        header("WWW-Authenticate: " . $e->getAuthenticateHeader());
+        header("Content-Type: application/json");
+        die($e->getContent());
+    }

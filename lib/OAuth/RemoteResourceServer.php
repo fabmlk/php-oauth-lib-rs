@@ -22,30 +22,12 @@ class RemoteResourceServer
 {
     private $_config;
 
-    private $_grantedScope;
-    private $_resourceOwnerId;
-    private $_resourceOwnerAttributes;
-    private $_isVerified;
-
     public function __construct(array $c)
     {
         $this->_config = $c;
-
-        $this->_resourceOwnerId = NULL;
-        $this->_grantedScope = NULL;
-        $this->_resourceOwnerAttributes = NULL;
-        $this->_isVerified = FALSE;
     }
 
-    /**
-     * Verify the Authorization Bearer token.
-     *
-     * Note: this only works on Apache as the PHP function
-     * "apache_request_headers" is used. On other web servers, or when using
-     * a framework, please use the verifyAuthorizationHeader function instead
-     * where you can directly specify the contents of the Authorization header.
-     */
-    public function verifyRequest()
+    public function verifyAndHandleRequest()
     {
         try {
             $headerBearerToken = NULL;
@@ -57,34 +39,13 @@ class RemoteResourceServer
             } elseif (isset($_SERVER)) {
                 $headers = $_SERVER;
             } else {
-                $headers = NULL;
-            }
-
-            if (NULL !== $headers) {
-                // FIXME: also look for "X-Authorization"
-                $headerKeys = array_keys($headers);
-                $keyPositionInArray = array_search(strtolower("Authorization"), array_map('strtolower', $headerKeys));
-                $authorizationHeader = (FALSE !== $keyPositionInArray) ? $headers[$headerKeys[$keyPositionInArray]] : NULL;
-                $headerBearerToken = self::extractBearerTokenFromAuthorizationHeader($authorizationHeader);
+                $headers = array();
             }
 
             // look for query parameters
-            if (isset($_GET) && is_array($_GET) && isset($_GET['access_token'])) {
-                $queryBearerToken = $_GET['access_token'];
-            }
+            $query = (isset($_GET) && is_array($_GET)) ? $_GET : array();
 
-            // no bearer token
-            if (NULL === $headerBearerToken && NULL === $queryBearerToken) {
-                throw new RemoteResourceServerException("no_token", "missing token");
-            }
-            // two tokens
-            if (NULL !== $headerBearerToken && NULL !== $queryBearerToken) {
-                // FIXME: double!
-                throw new RemoteResourceServerException("invalid_request", "more than one method for including an access token used");
-            }
-
-            // only one, good
-            return NULL !== $headerBearerToken ? $this->verifyBearerToken($headerBearerToken) : $this->verifyBearerToken($queryBearerToken);
+            return $this->verifyRequest($headers, $query);
 
         } catch (RemoteResourceServerException $e) {
             // send response directly to client, halt execution of calling script as well
@@ -96,24 +57,62 @@ class RemoteResourceServer
         }
     }
 
-    public static function extractBearerTokenFromAuthorizationHeader($authorizationHeader)
+    public function verifyRequest(array $headers, array $query)
+    {
+        // extract token from authorization header
+        $authorizationHeader = self::_getAuthorizationHeader($headers);
+        $ah = FALSE !== $authorizationHeader ? self::_getTokenFromHeader($authorizationHeader) : FALSE;
+
+        // extract token from query parameters
+        $aq = self::_getTokenFromQuery($query);
+
+        if (FALSE === $ah && FALSE === $aq) {
+            // no token at all provided
+            throw new RemoteResourceServerException("no_token", "missing token");
+        }
+        if (FALSE !== $ah && FALSE !== $aq) {
+            // two tokens provided
+            throw new RemoteResourceServerException("invalid_request", "more than one method for including an access token used");
+        }
+        if (FALSE !== $ah) {
+            return $this->verifyBearerToken($ah);
+        }
+        if (FALSE !== $aq) {
+            return $this->verifyBearerToken($aq);
+        }
+    }
+
+    private static function _getAuthorizationHeader(array $headers)
+    {
+        $headerKeys = array_keys($headers);
+        foreach (array("X-Authorization", "Authorization") as $h) {
+            $keyPositionInArray = array_search(strtolower($h), array_map('strtolower', $headerKeys));
+            if (FALSE === $keyPositionInArray) {
+                continue;
+            }
+
+            return $headers[$headerKeys[$keyPositionInArray]];
+        }
+
+        return FALSE;
+    }
+
+    private static function _getTokenFromHeader($authorizationHeader)
     {
         if (0 !== strpos($authorizationHeader, "Bearer ")) {
-            return NULL;
+            return FALSE;
         }
 
         return substr($authorizationHeader, 7);
     }
 
-    /**
-     * Verify the Authorization Bearer token.
-     *
-     * @param $authorizationHeader The actual content of the Authorization
-     * header, e.g.: "Bearer abcdef"
-     */
-    public function verifyAuthorizationHeader($authorizationHeader)
+    private static function _getTokenFromQuery(array $queryParameters)
     {
-        return $this->verifyBearerToken(self::extractBearerTokenFromAuthorizationHeader($authorizationHeader));
+        if (!isset($queryParameters) || empty($queryParameters['access_token'])) {
+            return FALSE;
+        }
+
+        return $queryParameters['access_token'];
     }
 
     public function verifyBearerToken($token)

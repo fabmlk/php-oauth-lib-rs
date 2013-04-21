@@ -37,7 +37,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
             "realm" => "Foo"
         );
         $rs = new RemoteResourceServer($config);
-        $introspection = $rs->verifyBearerToken("001");
+        $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 001"), array());
         $this->assertEquals("fkooman", $introspection->getSub());
         $this->assertEquals("testclient", $introspection->getClientId());
         $this->assertEquals(1366377846, $introspection->getExpiresAt());
@@ -54,7 +54,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
             "realm" => "Foo"
         );
         $rs = new RemoteResourceServer($config);
-        $introspection = $rs->verifyBearerToken("002");
+        $introspection = $rs->verifyRequest(array(), array("access_token" => "002"));
         $this->assertEquals("frko", $introspection->getSub());
         $this->assertEquals("testclient", $introspection->getClientId());
         $this->assertEquals(1366377846, $introspection->getExpiresAt());
@@ -72,7 +72,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         );
         try {
             $rs = new RemoteResourceServer($config);
-            $introspection = $rs->verifyBearerToken("003");
+            $introspection = $rs->verifyRequest(array(), array("access_token" => "003"));
             $this->assertTrue(FALSE);
         } catch (RemoteResourceServerException $e) {
             $this->assertEquals("invalid_token", $e->getMessage());
@@ -90,7 +90,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         );
         try {
             $rs = new RemoteResourceServer($config);
-            $introspection = $rs->verifyBearerToken("100");
+            $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 100"), array());
             $this->assertTrue(FALSE);
         } catch (RemoteResourceServerException $e) {
             $this->assertEquals("internal_server_error", $e->getMessage());

@@ -155,7 +155,7 @@ class RemoteResourceServer
         if (0 !== strpos($introspectionEndpoint, "file://")) {
             // not a file
             if (200 !== $httpCode) {
-                throw new RemoteResourceServerException("internal_server_error", "malformed request to introspection endpoint");
+                throw new RemoteResourceServerException("internal_server_error", "unexpected response code from introspection endpoint (" . $httpCode . ")");
             }
         }
 

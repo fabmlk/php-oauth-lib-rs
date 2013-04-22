@@ -34,7 +34,6 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
     {
         $config = array(
             "introspectionEndpoint" => $this->_dataPath,
-            "realm" => "Foo"
         );
         $rs = new RemoteResourceServer($config);
         $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 001"), array());
@@ -51,7 +50,6 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
     {
         $config = array(
             "introspectionEndpoint" => $this->_dataPath,
-            "realm" => "Foo"
         );
         $rs = new RemoteResourceServer($config);
         $introspection = $rs->verifyRequest(array(), array("access_token" => "002"));
@@ -68,7 +66,6 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
     {
         $config = array(
             "introspectionEndpoint" => $this->_dataPath,
-            "realm" => "Foo"
         );
         try {
             $rs = new RemoteResourceServer($config);
@@ -86,7 +83,6 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
     {
         $config = array(
             "introspectionEndpoint" => $this->_dataPath,
-            "realm" => "Foo"
         );
         try {
             $rs = new RemoteResourceServer($config);
@@ -97,6 +93,40 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
             $this->assertEquals("unexpected response from introspection endpoint", $e->getDescription());
             $this->assertEquals(500, $e->getResponseCode());
             $this->assertNull($e->getAuthenticateHeader());
+        }
+    }
+
+    public function testMultipleBearerTokens()
+    {
+        $config = array(
+            "introspectionEndpoint" => $this->_dataPath,
+        );
+        try {
+            $rs = new RemoteResourceServer($config);
+            $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 003"), array("access_token" => "003"));
+            $this->assertTrue(FALSE);
+        } catch (RemoteResourceServerException $e) {
+            $this->assertEquals("invalid_request", $e->getMessage());
+            $this->assertEquals("more than one method for including an access token used", $e->getDescription());
+            $this->assertEquals(400, $e->getResponseCode());
+            $this->assertEquals('Bearer realm="Resource Server",error="invalid_request",error_description="more than one method for including an access token used"', $e->getAuthenticateHeader());
+        }
+    }
+
+    public function testNoBearerTokens()
+    {
+        $config = array(
+            "introspectionEndpoint" => $this->_dataPath,
+        );
+        try {
+            $rs = new RemoteResourceServer($config);
+            $introspection = $rs->verifyRequest(array(), array());
+            $this->assertTrue(FALSE);
+        } catch (RemoteResourceServerException $e) {
+            $this->assertEquals("no_token", $e->getMessage());
+            $this->assertEquals("missing token", $e->getDescription());
+            $this->assertEquals(401, $e->getResponseCode());
+            $this->assertEquals('Bearer realm="Resource Server"', $e->getAuthenticateHeader());
         }
     }
 }

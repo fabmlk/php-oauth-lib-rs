@@ -49,9 +49,12 @@ class RemoteResourceServer
 
         } catch (RemoteResourceServerException $e) {
             // send response directly to client, halt execution of calling script as well
-            $e->setRealm($this->_getRequiredConfigParameter("realm"));
+            $e->setRealm($this->_getConfigParameter("realm", FALSE, "Resource Server"));
             header("HTTP/1.1 " . $e->getResponseCode());
-            header("WWW-Authenticate: " . $e->getAuthenticateHeader());
+            if (NULL !== $e->getAuthenticateHeader()) {
+                // for "internal_server_error" responses no WWW-Authenticate header is set
+                header("WWW-Authenticate: " . $e->getAuthenticateHeader());
+            }
             header("Content-Type: application/json");
             die($e->getContent());
         }
@@ -122,8 +125,12 @@ class RemoteResourceServer
             throw new RemoteResourceServerException("invalid_token", "the access token is not a valid b64token");
         }
 
-        $introspectionEndpoint = $this->_getRequiredConfigParameter("introspectionEndpoint");
+        $introspectionEndpoint = $this->_getConfigParameter("introspectionEndpoint");
         $get = array("token" => $token);
+
+        if (!function_exists("curl_init")) {
+            throw new RemoteResourceServerException("internal_server_error", "php curl module not available");
+        }
 
         $curlChannel = curl_init();
 
@@ -146,7 +153,7 @@ class RemoteResourceServer
 
         if (FALSE === $output) {
             $error = curl_error($curlChannel);
-            throw new RemoteResourceServerException("internal_server_error", "unable to contact introspection endpoint (" . $error . ")");
+            throw new RemoteResourceServerException("internal_server_error", "unable to contact introspection endpoint");
         }
 
         $httpCode = curl_getinfo($curlChannel, CURLINFO_HTTP_CODE);
@@ -155,7 +162,7 @@ class RemoteResourceServer
         if (0 !== strpos($introspectionEndpoint, "file://")) {
             // not a file
             if (200 !== $httpCode) {
-                throw new RemoteResourceServerException("internal_server_error", "unexpected response code from introspection endpoint (" . $httpCode . ")");
+                throw new RemoteResourceServerException("internal_server_error", "unexpected response code from introspection endpoint");
             }
         }
 
@@ -165,8 +172,9 @@ class RemoteResourceServer
             throw new RemoteResourceServerException("internal_server_error", "unable to decode response from introspection endpoint");
         }
         if (!is_array($data) || !isset($data['active']) || !is_bool($data['active'])) {
-            throw new RemoteResourceServerException("internal_server_error", "malformed response from introspection endpoint");
+            throw new RemoteResourceServerException("internal_server_error", "unexpected response from introspection endpoint");
         }
+
         if (!$data['active']) {
             throw new RemoteResourceServerException("invalid_token", "the token is not active");
         }
@@ -174,10 +182,14 @@ class RemoteResourceServer
         return new TokenIntrospection($data);
     }
 
-    private function _getRequiredConfigParameter($key)
+    private function _getConfigParameter($key, $required = TRUE, $default = NULL)
     {
         if (!array_key_exists($key, $this->_config)) {
-            throw new RemoteResourceServerException("internal_server_error", "missing configuration parameter (" . $key . ")");
+            if ($required) {
+                throw new RemoteResourceServerException("internal_server_error", "missing required configuration parameter");
+            } else {
+                return $default;
+            }
         }
 
         return $this->_config[$key];
@@ -191,7 +203,7 @@ class TokenIntrospection
     public function __construct(array $response)
     {
         if (!isset($response['active']) || !is_bool($response['active'])) {
-            throw new RemoteResourceServerException("internal_server_error", "malformed response from introspection endpoint");
+            throw new RemoteResourceServerException("internal_server_error", "invalid introspection data");
         }
         $this->_response = $response;
     }
@@ -268,7 +280,6 @@ class TokenIntrospection
     }
 
     /* ADDITIONAL HELPER METHODS */
-
     public function getResourceOwnerId()
     {
         return $this->getSub();
@@ -276,20 +287,12 @@ class TokenIntrospection
 
     public function getScopeAsArray()
     {
-        if (FALSE === $this->getScope()) {
-            return array();
-        } else {
-            return explode(" ", $this->getScope());
-        }
+        return FALSE !== $this->getScope() ? explode(" ", $this->getScope()) : FALSE;
     }
 
     public function hasScope($scope)
     {
-        if (FALSE === $this->getScopeAsArray()) {
-            return FALSE;
-        }
-
-        return in_array($scope, $this->getScopeAsArray());
+        return FALSE !== $this->getScopeAsArray() ? in_array($scope, $this->getScopeAsArray()) : FALSE;
     }
 
     public function requireScope($scope)
@@ -309,7 +312,7 @@ class TokenIntrospection
     public function hasAnyScope(array $scope)
     {
         foreach ($scope as $s) {
-            if (in_array($s, $this->hasScope())) {
+            if ($this->hasScope($s)) {
                 return TRUE;
             }
         }
@@ -317,7 +320,6 @@ class TokenIntrospection
         return FALSE;
     }
 
-    /* PROPRIETARY EXTENSION "X-ENTITLEMENT" */
     public function getEntitlement()
     {
         return $this->_getKeyValue('x-entitlement');
@@ -325,26 +327,18 @@ class TokenIntrospection
 
     public function getEntitlementAsArray()
     {
-        if (FALSE === $this->getEntitlement()) {
-            return array();
-        } else {
-            return explode(" ", $this->getEntitlement());
-        }
+        return FALSE !== $this->getEntitlement() ? explode(" ", $this->getEntitlement()) : FALSE;
     }
 
     public function hasEntitlement($entitlement)
     {
-        if (FALSE === $this->getEntitlementAsArray()) {
-            return FALSE;
-        }
-
-        return in_array($entitlement, $this->getEntitlementAsArray());
+        return FALSE !== $this->getEntitlementAsArray() ? in_array($entitlement, $this->getEntitlementAsArray()) : FALSE;
     }
 
-    public function requireEntitlement($scope)
+    public function requireEntitlement($entitlement)
     {
-        if (FALSE === $this->hasEntitlement($scope)) {
-            throw new RemoteResourceServerException("insufficient_scope", "no permission for this call with granted entitlement");
+        if (FALSE === $this->hasEntitlement($entitlement)) {
+            throw new RemoteResourceServerException("insufficient_entitlement", "no permission for this call with granted entitlement");
         }
     }
 }

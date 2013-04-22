@@ -20,12 +20,11 @@ Using the library is straightforward:
 
     $config = array(
         "introspectionEndpoint" => "http://localhost/php-oauth/introspect.php",
-        "realm" => "My Demo Resource Server"
     );
-
     $rs = new RemoteResourceServer($config);
     $introspection = $rs->verifyAndHandleRequest();
 
+    header("Content-Type: text/plain");
     echo $introspection->getSub();  // resourceOwnerId
 
 Only the `introspectionEndpoint` configuration parameter needs to be set.
@@ -61,8 +60,9 @@ is not allowed to specify both methods simultaneously.
 
 ## Retrieve Resource Owner Information
 After the `verifyRequest()`, or any of the other verify functions, some methods 
-are available to retrieve information about the resource owner and client 
-assuming the verification was successful.
+may be available to retrieve information about the resource owner and client 
+assuming the verification was successful and the token introspection endpoint
+provides this information to the resource server.
 
 * `getResourceOwnerId()` (the unique resource owner identifier)
 * `getScope()` (the scope granted to the client accessing this resource)
@@ -71,7 +71,9 @@ assuming the verification was successful.
 
 Note that the `getEntitlement()` methods is not supported by all authorization 
 servers and is a properietary extension to 
-[https://github.com/fkooman/php-oauth](php-oauth).
+[https://github.com/fkooman/php-oauth](php-oauth). There are more methods that
+can help with implementing a resource server more efficiently, see the 
+`TokenIntrospection` class documentation.
 
 ## Exceptions
 The library will return exceptions when using the `verifyRequest` method, you
@@ -107,11 +109,15 @@ Here is an example on how to use this library with your own exception handling:
     try {
         $rs = new RemoteResourceServer($config);
         $introspection = $rs->verifyRequest(apache_request_headers(), $_GET);
+        header("Content-Type: text/plain");
         echo $introspection->getSub();
     } catch (RemoteResourceServerException $e) {
         $e->setRealm("Foo");
         header("HTTP/1.1 " . $e->getResponseCode());
-        header("WWW-Authenticate: " . $e->getAuthenticateHeader());
+        if (NULL !== $e->getAuthenticateHeader()) {
+            // for "internal_server_error" responses no WWW-Authenticate header is set
+            header("WWW-Authenticate: " . $e->getAuthenticateHeader());
+        }
         header("Content-Type: application/json");
         die($e->getContent());
     }

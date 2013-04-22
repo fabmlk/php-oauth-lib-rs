@@ -94,7 +94,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
             $this->assertTrue(FALSE);
         } catch (RemoteResourceServerException $e) {
             $this->assertEquals("internal_server_error", $e->getMessage());
-            $this->assertEquals("malformed response from introspection endpoint", $e->getDescription());
+            $this->assertEquals("unexpected response from introspection endpoint", $e->getDescription());
             $this->assertEquals(500, $e->getResponseCode());
             $this->assertNull($e->getAuthenticateHeader());
         }

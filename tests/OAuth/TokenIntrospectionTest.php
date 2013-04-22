@@ -26,7 +26,7 @@ class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
     /**
      * @dataProvider validTokenProvider
      */
-    public function testTokenIntrospectionTest($token, $active, $expiresAt, $issuedAt, $scope, $clientId, $sub, $aud)
+    public function testTokenIntrospectionTest($token, $active, $expiresAt, $issuedAt, $scope, $entitlement, $clientId, $sub, $aud)
     {
         $i = new TokenIntrospection($token);
         $this->assertEquals($active, $i->getActive());
@@ -42,6 +42,14 @@ class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
                 $i->requireScope($eScope[$j]);
             }
         }
+        if (FALSE !== $i->getEntitlement()) {
+            $eEntitlement = explode(" ", $i->getEntitlement());
+            $this->assertEquals($eEntitlement, $i->getEntitlementAsArray());
+            for ( $j = 0; $j < count($eEntitlement); $j++) {
+                $this->assertTrue($i->hasEntitlement($eEntitlement[$j]));
+                $i->requireEntitlement($eEntitlement[$j]);
+            }
+        }
         $this->assertEquals($clientId, $i->getClientId());
         $this->assertEquals($sub, $i->getResourceOwnerId());
         $this->assertEquals($sub, $i->getSub());
@@ -51,6 +59,12 @@ class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
             $this->assertTrue(FALSE);
         } catch (RemoteResourceServerException $e) {
         }
+        try {
+            $i->requireEntitlement("bogus");
+            $this->assertTrue(FALSE);
+        } catch (RemoteResourceServerException $e) {
+        }
+
         $this->assertFalse($i->hasAnyScope(array("foo")));
     }
 
@@ -59,12 +73,17 @@ class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
         return array(
             array(
                 array("active" => TRUE),
-                TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
+                TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
             ),
 
             array(
                 array("active" => TRUE, "expires_at" => 12345, "issued_at" => 1234, "scope" => "read write", "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar"),
-                TRUE, 12345, 1234, "read write", "foo", "fkooman", "foobar"
+                TRUE, 12345, 1234, "read write", FALSE, "foo", "fkooman", "foobar"
+            ),
+
+            array(
+                array("active" => TRUE, "expires_at" => 12345, "issued_at" => 1234, "scope" => "read write", "x-entitlement" => "manager owner user", "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar"),
+                TRUE, 12345, 1234, "read write", "manager owner user", "foo", "fkooman", "foobar"
             ),
         );
     }

@@ -307,6 +307,13 @@ class TokenIntrospection
         }
     }
 
+    public function requireAnyScope($scope)
+    {
+        if (FALSE === $this->hasAnyScope($scope)) {
+            throw new RemoteResourceServerException("insufficient_scope", "no permission for this call with granted scope");
+        }
+    }
+
     /**
      * At least one of the scopes should be granted.
      *

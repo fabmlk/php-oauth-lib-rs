@@ -353,6 +353,18 @@ class TokenIntrospection
             throw new RemoteResourceServerException("insufficient_entitlement", "no permission for this call with granted entitlement");
         }
     }
+
+    public function getAttributes()
+    {
+        return $this->_getKeyValue('x-attributes');
+    }
+
+    public function getAttribute($key)
+    {
+        $attributes = $this->getAttributes();
+
+        return (FALSE !== $attributes && isset($attributes[$key])) ? $attributes[$key] : FALSE;
+    }
 }
 
 class RemoteResourceServerException extends \Exception

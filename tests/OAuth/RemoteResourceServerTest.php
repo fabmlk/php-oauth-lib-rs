@@ -113,6 +113,18 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         }
     }
 
+    public function testAttributes()
+    {
+        $config = array(
+            "introspectionEndpoint" => $this->_dataPath,
+        );
+        $rs = new RemoteResourceServer($config);
+        $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 004"), array());
+        $this->assertTrue($introspection->getActive());
+        $this->assertEquals(array("uid" => array("admin"), "schacHomeOrganization" => array("localhost")), $introspection->getAttributes());
+        $this->assertEquals(array("admin"), $introspection->getAttribute("uid"));
+    }
+
     public function testNoBearerTokens()
     {
         $config = array(

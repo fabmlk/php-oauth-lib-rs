@@ -1,8 +1,8 @@
 {
     "active": true, 
     "client_id": "html-manage-authorizations", 
-    "expires_at": 1366844432, 
-    "issued_at": 1366815632, 
+    "exp": 1366844432, 
+    "iat": 1366815632, 
     "scope": "authorizations", 
     "sub": "48a5788a56b3dc9035e981aa9c8924360c1906e4", 
     "x-attributes": {

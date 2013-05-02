@@ -77,12 +77,12 @@ class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
             ),
 
             array(
-                array("active" => TRUE, "expires_at" => 12345, "issued_at" => 1234, "scope" => "read write", "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar"),
+                array("active" => TRUE, "exp" => 12345, "iat" => 1234, "scope" => "read write", "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar"),
                 TRUE, 12345, 1234, "read write", FALSE, "foo", "fkooman", "foobar"
             ),
 
             array(
-                array("active" => TRUE, "expires_at" => 12345, "issued_at" => 1234, "scope" => "read write", "x-entitlement" => "manager owner user", "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar"),
+                array("active" => TRUE, "exp" => 12345, "iat" => 1234, "scope" => "read write", "x-entitlement" => "manager owner user", "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar"),
                 TRUE, 12345, 1234, "read write", "manager owner user", "foo", "fkooman", "foobar"
             ),
         );

@@ -229,7 +229,7 @@ class TokenIntrospection
      */
     public function getExpiresAt()
     {
-        return $this->_getKeyValue('expires_at');
+        return $this->_getKeyValue('exp');
     }
 
     /**
@@ -239,7 +239,7 @@ class TokenIntrospection
      */
     public function getIssuedAt()
     {
-        return $this->_getKeyValue('issued_at');
+        return $this->_getKeyValue('iat');
     }
 
     /**

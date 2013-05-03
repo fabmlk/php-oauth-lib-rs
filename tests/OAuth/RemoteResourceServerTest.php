@@ -39,7 +39,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 001"), array());
         $this->assertEquals("fkooman", $introspection->getSub());
         $this->assertEquals("testclient", $introspection->getClientId());
-        $this->assertEquals(1366377846, $introspection->getExpiresAt());
+        $this->assertEquals(2366377846, $introspection->getExpiresAt());
         $this->assertEquals(1366376612, $introspection->getIssuedAt());
         $this->assertEquals("foo bar", $introspection->getScope());
         $this->assertEquals("urn:x-foo:service:access urn:x-bar:privilege:admin", $introspection->getEntitlement());
@@ -55,7 +55,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         $introspection = $rs->verifyRequest(array(), array("access_token" => "002"));
         $this->assertEquals("frko", $introspection->getSub());
         $this->assertEquals("testclient", $introspection->getClientId());
-        $this->assertEquals(1366377846, $introspection->getExpiresAt());
+        $this->assertEquals(2366377846, $introspection->getExpiresAt());
         $this->assertEquals(1366376612, $introspection->getIssuedAt());
         $this->assertEquals("a b c", $introspection->getScope());
         $this->assertFalse($introspection->getEntitlement());
@@ -91,6 +91,23 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         } catch (RemoteResourceServerException $e) {
             $this->assertEquals("internal_server_error", $e->getMessage());
             $this->assertEquals("unexpected response from introspection endpoint", $e->getDescription());
+            $this->assertEquals(500, $e->getResponseCode());
+            $this->assertNull($e->getAuthenticateHeader());
+        }
+    }
+
+    public function testNoJsonResponse()
+    {
+        $config = array(
+            "introspectionEndpoint" => $this->_dataPath,
+        );
+        try {
+            $rs = new RemoteResourceServer($config);
+            $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 101"), array());
+            $this->assertTrue(FALSE);
+        } catch (RemoteResourceServerException $e) {
+            $this->assertEquals("internal_server_error", $e->getMessage());
+            $this->assertEquals("unable to decode response from introspection endpoint", $e->getDescription());
             $this->assertEquals(500, $e->getResponseCode());
             $this->assertNull($e->getAuthenticateHeader());
         }

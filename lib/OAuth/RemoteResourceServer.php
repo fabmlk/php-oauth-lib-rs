@@ -208,8 +208,35 @@ class TokenIntrospection
     public function __construct(array $response)
     {
         if (!isset($response['active']) || !is_bool($response['active'])) {
-            throw new RemoteResourceServerException("internal_server_error", "invalid introspection data");
+            throw new RemoteResourceServerException("internal_server_error", "active key should be set and be a boolean");
         }
+
+        if (isset($response['exp']) && (!is_int($response['exp']) || 0 > $response['exp'])) {
+            throw new RemoteResourceServerException("internal_server_error", "exp key must be positive integer");
+        }
+
+        if (isset($response['exp']) && (!is_int($response['iat']) || 0 > $response['iat'])) {
+            throw new RemoteResourceServerException("internal_server_error", "iat key must be positive integer");
+        }
+
+        if (isset($response['iat'])) {
+            if (time() < $response['iat']) {
+                throw new RemoteResourceServerException("internal_server_error", "token issued in the future");
+            }
+        }
+
+        if (isset($response['exp']) && isset($response['iat'])) {
+            if ($response['exp'] < $response['iat']) {
+                throw new RemoteResourceServerException("internal_server_error", "token expired before it was issued");
+            }
+        }
+
+        if (isset($response['exp'])) {
+            if (time() > $response['exp']) {
+                throw new RemoteResourceServerException("invalid_token", "the token expired");
+            }
+        }
+
         $this->_response = $response;
     }
 
@@ -277,6 +304,15 @@ class TokenIntrospection
     public function getAud()
     {
         return $this->_getKeyValue('aud');
+    }
+
+    /**
+     * OPTIONAL.  Type of the token as defined in OAuth 2.0
+     * section 5.1.
+     */
+    public function getTokenType()
+    {
+        return $this->_getKeyValue('token_type');
     }
 
     private function _getKeyValue($key)

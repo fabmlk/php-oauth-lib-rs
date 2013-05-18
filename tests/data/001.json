@@ -5,5 +5,8 @@
     "iat": 1366376612, 
     "scope": "foo bar", 
     "sub": "fkooman", 
-    "x-entitlement": "urn:x-foo:service:access urn:x-bar:privilege:admin"
+    "x-entitlement": [
+        "urn:x-foo:service:access", 
+        "urn:x-bar:privilege:admin"
+    ]
 }

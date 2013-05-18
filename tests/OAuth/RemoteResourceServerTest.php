@@ -42,7 +42,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(2366377846, $introspection->getExpiresAt());
         $this->assertEquals(1366376612, $introspection->getIssuedAt());
         $this->assertEquals("foo bar", $introspection->getScope());
-        $this->assertEquals("urn:x-foo:service:access urn:x-bar:privilege:admin", $introspection->getEntitlement());
+        $this->assertEquals(array("urn:x-foo:service:access","urn:x-bar:privilege:admin"), $introspection->getEntitlement());
         $this->assertTrue($introspection->getActive());
     }
 
@@ -130,7 +130,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         }
     }
 
-    public function testAttributes()
+    public function testExt()
     {
         $config = array(
             "introspectionEndpoint" => $this->_dataPath,
@@ -138,8 +138,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         $rs = new RemoteResourceServer($config);
         $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 004"), array());
         $this->assertTrue($introspection->getActive());
-        $this->assertEquals(array("uid" => array("admin"), "schacHomeOrganization" => array("localhost")), $introspection->getAttributes());
-        $this->assertEquals(array("admin"), $introspection->getAttribute("uid"));
+        $this->assertEquals(array("uid" => array("admin"), "schacHomeOrganization" => array("localhost")), $introspection->getExt());
     }
 
     public function testNoBearerTokens()

@@ -68,9 +68,12 @@ provides this information to the resource server.
 * `getScope()` (the scope granted to the client accessing this resource)
 * `getEntitlement()` (the entitlement the resource owner has when accessing this 
   resource)
+* `getExt()` (get additional data set by the authentication plugin. For instance
+  the SspResourceOwner class uses this to store the SAML attributes obtained from 
+  the identity provider)
 
-Note that the `getEntitlement()` methods is not supported by all authorization 
-servers and is a properietary extension to 
+Note that the `getEntitlement()` and `getExt()` methods are not supported by all 
+authorization servers and is a proprietary extension to 
 [https://github.com/fkooman/php-oauth](php-oauth). There are more methods that
 can help with implementing a resource server more efficiently, see the 
 `TokenIntrospection` class documentation.

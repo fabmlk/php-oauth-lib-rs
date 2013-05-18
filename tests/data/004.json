@@ -5,13 +5,15 @@
     "iat": 1366815632, 
     "scope": "authorizations", 
     "sub": "48a5788a56b3dc9035e981aa9c8924360c1906e4", 
-    "x-attributes": {
+    "x-entitlement": [
+        "urn:x-oauth:entitlement:applications"
+    ], 
+    "x-ext": {
         "schacHomeOrganization": [
             "localhost"
         ], 
         "uid": [
             "admin"
         ]
-    }, 
-    "x-entitlement": "urn:x-oauth:entitlement:applications"
+    }
 }

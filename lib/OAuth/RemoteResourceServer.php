@@ -390,17 +390,11 @@ class TokenIntrospection
         }
     }
 
-    public function getAttributes()
+    public function getExt()
     {
-        return $this->_getKeyValue('x-attributes');
+        return $this->_getKeyValue('x-ext');
     }
 
-    public function getAttribute($key)
-    {
-        $attributes = $this->getAttributes();
-
-        return (FALSE !== $attributes && isset($attributes[$key])) ? $attributes[$key] : FALSE;
-    }
 }
 
 class RemoteResourceServerException extends \Exception

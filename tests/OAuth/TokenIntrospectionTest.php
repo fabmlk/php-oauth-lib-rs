@@ -42,12 +42,11 @@ class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
                 $i->requireScope($eScope[$j]);
             }
         }
-        if (FALSE !== $i->getEntitlement()) {
-            $eEntitlement = explode(" ", $i->getEntitlement());
-            $this->assertEquals($eEntitlement, $i->getEntitlementAsArray());
-            for ( $j = 0; $j < count($eEntitlement); $j++) {
-                $this->assertTrue($i->hasEntitlement($eEntitlement[$j]));
-                $i->requireEntitlement($eEntitlement[$j]);
+        $e = $i->getEntitlement();
+        if (FALSE !== $e) {
+            for ( $j = 0; $j < count($e); $j++) {
+                $this->assertTrue($i->hasEntitlement($e[$j]));
+                $i->requireEntitlement($e[$j]);
             }
         }
         $this->assertEquals($clientId, $i->getClientId());
@@ -85,8 +84,8 @@ class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
             ),
 
             array(
-                array("active" => TRUE, "exp" => $exp, "iat" => $iat, "scope" => "read write", "x-entitlement" => "manager owner user", "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar"),
-                TRUE, $exp, $iat, "read write", "manager owner user", "foo", "fkooman", "foobar"
+                array("active" => TRUE, "exp" => $exp, "iat" => $iat, "scope" => "read write", "x-entitlement" => array("manager", "owner", "user"), "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar"),
+                TRUE, $exp, $iat, "read write", array("manager", "owner", "user"), "foo", "fkooman", "foobar"
             ),
         );
     }

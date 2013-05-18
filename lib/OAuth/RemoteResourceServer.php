@@ -208,15 +208,15 @@ class TokenIntrospection
     public function __construct(array $response)
     {
         if (!isset($response['active']) || !is_bool($response['active'])) {
-            throw new RemoteResourceServerException("internal_server_error", "active key should be set and be a boolean");
+            throw new RemoteResourceServerException("internal_server_error", "active key should be set and its value a boolean");
         }
 
         if (isset($response['exp']) && (!is_int($response['exp']) || 0 > $response['exp'])) {
-            throw new RemoteResourceServerException("internal_server_error", "exp key must be positive integer");
+            throw new RemoteResourceServerException("internal_server_error", "exp value must be positive integer");
         }
 
         if (isset($response['exp']) && (!is_int($response['iat']) || 0 > $response['iat'])) {
-            throw new RemoteResourceServerException("internal_server_error", "iat key must be positive integer");
+            throw new RemoteResourceServerException("internal_server_error", "iat value must be positive integer");
         }
 
         if (isset($response['iat'])) {
@@ -235,6 +235,10 @@ class TokenIntrospection
             if (time() > $response['exp']) {
                 throw new RemoteResourceServerException("invalid_token", "the token expired");
             }
+        }
+
+        if (isset($response['x-entitlement']) && !is_array($response['x-entitlement'])) {
+            throw new RemoteResourceServerException("internal_server_error", "x-entitlement value must be array");
         }
 
         $this->_response = $response;
@@ -373,14 +377,9 @@ class TokenIntrospection
         return $this->_getKeyValue('x-entitlement');
     }
 
-    public function getEntitlementAsArray()
-    {
-        return FALSE !== $this->getEntitlement() ? explode(" ", $this->getEntitlement()) : FALSE;
-    }
-
     public function hasEntitlement($entitlement)
     {
-        return FALSE !== $this->getEntitlementAsArray() ? in_array($entitlement, $this->getEntitlementAsArray()) : FALSE;
+        return FALSE !== $this->getEntitlement() ? in_array($entitlement, $this->getEntitlement()) : FALSE;
     }
 
     public function requireEntitlement($entitlement)

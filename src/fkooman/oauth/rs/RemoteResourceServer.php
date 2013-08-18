@@ -144,28 +144,23 @@ class RemoteResourceServer
             // file cannot have query parameter, use accesstoken as JSON file instead
             $introspectionEndpoint .= $token . ".json";
         }
+
+        $disableCertCheck = $this->_getConfigParameter("disableCertCheck", false, false);
         if (FALSE === curl_setopt_array($curlChannel, array (
             CURLOPT_URL => $introspectionEndpoint,
             //CURLOPT_FOLLOWLOCATION => 1,
             CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_SSL_VERIFYPEER => $disableCertCheck ? 0 : 1,
+            CURLOPT_SSL_VERIFYHOST => $disableCertCheck ? 0 : 2,
         ))) {
             throw new RemoteResourceServerException("internal_server_error", "unable to set curl options");
-        }
-
-        if (!$this->_getConfigParameter("disableCertCheck", false, false)) {
-            if (FALSE === curl_setopt_array($curlChannel, array (
-                CURLOPT_SSL_VERIFYPEER => 1,
-                CURLOPT_SSL_VERIFYHOST => 2,
-            ))) {
-                throw new RemoteResourceServerException("internal_server_error", "unable to set curl options");
-            }
         }
 
         $output = curl_exec($curlChannel);
 
         if (FALSE === $output) {
             $error = curl_error($curlChannel);
-            throw new RemoteResourceServerException("internal_server_error", "unable to contact introspection endpoint");
+            throw new RemoteResourceServerException("internal_server_error", sprintf("unable to contact introspection endpoint [%s]", $error));
         }
 
         $httpCode = curl_getinfo($curlChannel, CURLINFO_HTTP_CODE);

@@ -26,7 +26,7 @@ class RemoteResourceServerException extends \Exception
 
     public function __construct($message, $description, $code = 0, Exception $previous = null)
     {
-       switch ($message) {
+        switch ($message) {
             case "no_token":
             case "invalid_token":
                 $this->responseCode = 401;
@@ -57,7 +57,11 @@ class RemoteResourceServerException extends \Exception
 
     public function setRealm($resourceServerRealm)
     {
-        $this->realm = (is_string($resourceServerRealm) && !empty($resourceServerRealm)) ? $resourceServerRealm : "Resource Server";
+        if (is_string($resourceServerRealm) && !empty($resourceServerRealm)) {
+            $this->realm = $resourceServerRealm;
+        } else {
+            $this->realm = "Resource Server";
+        }
     }
 
     public function getResponseCode()
@@ -67,7 +71,7 @@ class RemoteResourceServerException extends \Exception
 
     public function getAuthenticateHeader()
     {
-        $authenticateHeader = NULL;
+        $authenticateHeader = null;
         if (500 !== $this->responseCode) {
             if ("no_token" === $this->message) {
                 // no authorization header is a special case, the client did not know
@@ -85,5 +89,4 @@ class RemoteResourceServerException extends \Exception
     {
         return json_encode(array("error" => $this->message, "error_description" => $this->description));
     }
-
 }

@@ -20,18 +20,18 @@ namespace fkooman\oauth\rs;
 
 class RemoteResourceServer
 {
-    private $_config;
+    private $config;
 
     public function __construct(array $c)
     {
-        $this->_config = $c;
+        $this->config = $c;
     }
 
     public function verifyAndHandleRequest()
     {
         try {
-            $headerBearerToken = NULL;
-            $queryBearerToken = NULL;
+            $headerBearerToken = null;
+            $queryBearerToken = null;
 
             // look for headers
             if (function_exists("apache_request_headers")) {
@@ -49,9 +49,9 @@ class RemoteResourceServer
 
         } catch (RemoteResourceServerException $e) {
             // send response directly to client, halt execution of calling script as well
-            $e->setRealm($this->_getConfigParameter("realm", FALSE, "Resource Server"));
+            $e->setRealm($this->getConfigParameter("realm", false, "Resource Server"));
             header("HTTP/1.1 " . $e->getResponseCode());
-            if (NULL !== $e->getAuthenticateHeader()) {
+            if (null !== $e->getAuthenticateHeader()) {
                 // for "internal_server_error" responses no WWW-Authenticate header is set
                 header("WWW-Authenticate: " . $e->getAuthenticateHeader());
             }
@@ -63,56 +63,56 @@ class RemoteResourceServer
     public function verifyRequest(array $headers, array $query)
     {
         // extract token from authorization header
-        $authorizationHeader = self::_getAuthorizationHeader($headers);
-        $ah = FALSE !== $authorizationHeader ? self::_getTokenFromHeader($authorizationHeader) : FALSE;
+        $authorizationHeader = self::getAuthorizationHeader($headers);
+        $ah = false !== $authorizationHeader ? self::getTokenFromHeader($authorizationHeader) : false;
 
         // extract token from query parameters
-        $aq = self::_getTokenFromQuery($query);
+        $aq = self::getTokenFromQuery($query);
 
-        if (FALSE === $ah && FALSE === $aq) {
+        if (false === $ah && false === $aq) {
             // no token at all provided
             throw new RemoteResourceServerException("no_token", "missing token");
         }
-        if (FALSE !== $ah && FALSE !== $aq) {
+        if (false !== $ah && false !== $aq) {
             // two tokens provided
             throw new RemoteResourceServerException("invalid_request", "more than one method for including an access token used");
         }
-        if (FALSE !== $ah) {
+        if (false !== $ah) {
             return $this->verifyBearerToken($ah);
         }
-        if (FALSE !== $aq) {
+        if (false !== $aq) {
             return $this->verifyBearerToken($aq);
         }
     }
 
-    private static function _getAuthorizationHeader(array $headers)
+    private static function getAuthorizationHeader(array $headers)
     {
         $headerKeys = array_keys($headers);
         foreach (array("X-Authorization", "Authorization") as $h) {
             $keyPositionInArray = array_search(strtolower($h), array_map('strtolower', $headerKeys));
-            if (FALSE === $keyPositionInArray) {
+            if (false === $keyPositionInArray) {
                 continue;
             }
 
             return $headers[$headerKeys[$keyPositionInArray]];
         }
 
-        return FALSE;
+        return false;
     }
 
-    private static function _getTokenFromHeader($authorizationHeader)
+    private static function getTokenFromHeader($authorizationHeader)
     {
         if (0 !== strpos($authorizationHeader, "Bearer ")) {
-            return FALSE;
+            return false;
         }
 
         return substr($authorizationHeader, 7);
     }
 
-    private static function _getTokenFromQuery(array $queryParameters)
+    private static function getTokenFromQuery(array $queryParameters)
     {
         if (!isset($queryParameters) || empty($queryParameters['access_token'])) {
-            return FALSE;
+            return false;
         }
 
         return $queryParameters['access_token'];
@@ -121,11 +121,11 @@ class RemoteResourceServer
     public function verifyBearerToken($token)
     {
         // b64token = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"="
-        if ( 1 !== preg_match('|^[[:alpha:][:digit:]-._~+/]+=*$|', $token)) {
+        if (1 !== preg_match('|^[[:alpha:][:digit:]-._~+/]+=*$|', $token)) {
             throw new RemoteResourceServerException("invalid_token", "the access token is not a valid b64token");
         }
 
-        $introspectionEndpoint = $this->_getConfigParameter("introspectionEndpoint");
+        $introspectionEndpoint = $this->getConfigParameter("introspectionEndpoint");
         $get = array("token" => $token);
 
         if (!function_exists("curl_init")) {
@@ -133,32 +133,34 @@ class RemoteResourceServer
         }
 
         $curlChannel = curl_init();
-        if (FALSE === $curlChannel) {
+        if (false === $curlChannel) {
             throw new RemoteResourceServerException("internal_server_error", "unable to initialize curl");
         }
 
         if (0 !== strpos($introspectionEndpoint, "file://")) {
-            $separator = (FALSE === strpos($introspectionEndpoint, "?")) ? "?" : "&";
+            $separator = (false === strpos($introspectionEndpoint, "?")) ? "?" : "&";
             $introspectionEndpoint .= $separator . http_build_query($get, null, "&");
         } else {
             // file cannot have query parameter, use accesstoken as JSON file instead
             $introspectionEndpoint .= $token . ".json";
         }
 
-        $disableCertCheck = $this->_getConfigParameter("disableCertCheck", false, false);
-        if (FALSE === curl_setopt_array($curlChannel, array (
+        $disableCertCheck = $this->getConfigParameter("disableCertCheck", false, false);
+        $curlOptions = array(
             CURLOPT_URL => $introspectionEndpoint,
             //CURLOPT_FOLLOWLOCATION => 1,
             CURLOPT_RETURNTRANSFER => 1,
             CURLOPT_SSL_VERIFYPEER => $disableCertCheck ? 0 : 1,
             CURLOPT_SSL_VERIFYHOST => $disableCertCheck ? 0 : 2,
-        ))) {
+        );
+
+        if (false === curl_setopt_array($curlChannel, $curlOptions)) {
             throw new RemoteResourceServerException("internal_server_error", "unable to set curl options");
         }
 
         $output = curl_exec($curlChannel);
 
-        if (FALSE === $output) {
+        if (false === $output) {
             $error = curl_error($curlChannel);
             throw new RemoteResourceServerException("internal_server_error", sprintf("unable to contact introspection endpoint [%s]", $error));
         }
@@ -173,7 +175,7 @@ class RemoteResourceServer
             }
         }
 
-        $data = json_decode($output, TRUE);
+        $data = json_decode($output, true);
         $jsonError = json_last_error();
         if (JSON_ERROR_NONE !== $jsonError) {
             throw new RemoteResourceServerException("internal_server_error", "unable to decode response from introspection endpoint");
@@ -189,9 +191,9 @@ class RemoteResourceServer
         return new TokenIntrospection($data);
     }
 
-    private function _getConfigParameter($key, $required = TRUE, $default = NULL)
+    private function getConfigParameter($key, $required = true, $default = null)
     {
-        if (!array_key_exists($key, $this->_config)) {
+        if (!array_key_exists($key, $this->config)) {
             if ($required) {
                 throw new RemoteResourceServerException("internal_server_error", "missing required configuration parameter");
             } else {
@@ -199,6 +201,6 @@ class RemoteResourceServer
             }
         }
 
-        return $this->_config[$key];
+        return $this->config[$key];
     }
 }

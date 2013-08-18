@@ -20,7 +20,7 @@ namespace fkooman\oauth\rs;
 
 class TokenIntrospection
 {
-    private $_response;
+    private $response;
 
     public function __construct(array $response)
     {
@@ -58,7 +58,7 @@ class TokenIntrospection
             throw new RemoteResourceServerException("internal_server_error", "x-entitlement value must be array");
         }
 
-        $this->_response = $response;
+        $this->response = $response;
     }
 
     /**
@@ -67,7 +67,7 @@ class TokenIntrospection
      */
     public function getActive()
     {
-        return $this->_response['active'];
+        return $this->response['active'];
     }
 
     /**
@@ -77,7 +77,7 @@ class TokenIntrospection
      */
     public function getExpiresAt()
     {
-        return $this->_getKeyValue('exp');
+        return $this->getKeyValue('exp');
     }
 
     /**
@@ -87,7 +87,7 @@ class TokenIntrospection
      */
     public function getIssuedAt()
     {
-        return $this->_getKeyValue('iat');
+        return $this->getKeyValue('iat');
     }
 
     /**
@@ -97,7 +97,7 @@ class TokenIntrospection
      */
     public function getScope()
     {
-        return $this->_getKeyValue('scope');
+        return $this->getKeyValue('scope');
     }
 
     /**
@@ -106,7 +106,7 @@ class TokenIntrospection
      */
     public function getClientId()
     {
-        return $this->_getKeyValue('client_id');
+        return $this->getKeyValue('client_id');
     }
 
     /**
@@ -115,7 +115,7 @@ class TokenIntrospection
      */
     public function getSub()
     {
-        return $this->_getKeyValue('sub');
+        return $this->getKeyValue('sub');
     }
 
     /**
@@ -124,7 +124,7 @@ class TokenIntrospection
      */
     public function getAud()
     {
-        return $this->_getKeyValue('aud');
+        return $this->getKeyValue('aud');
     }
 
     /**
@@ -133,12 +133,12 @@ class TokenIntrospection
      */
     public function getTokenType()
     {
-        return $this->_getKeyValue('token_type');
+        return $this->getKeyValue('token_type');
     }
 
-    private function _getKeyValue($key)
+    private function getKeyValue($key)
     {
-        return isset($this->_response[$key]) ? $this->_response[$key] : FALSE;
+        return isset($this->response[$key]) ? $this->response[$key] : false;
     }
 
     /* ADDITIONAL HELPER METHODS */
@@ -149,24 +149,24 @@ class TokenIntrospection
 
     public function getScopeAsArray()
     {
-        return FALSE !== $this->getScope() ? explode(" ", $this->getScope()) : FALSE;
+        return false !== $this->getScope() ? explode(" ", $this->getScope()) : false;
     }
 
     public function hasScope($scope)
     {
-        return FALSE !== $this->getScopeAsArray() ? in_array($scope, $this->getScopeAsArray()) : FALSE;
+        return false !== $this->getScopeAsArray() ? in_array($scope, $this->getScopeAsArray()) : false;
     }
 
     public function requireScope($scope)
     {
-        if (FALSE === $this->hasScope($scope)) {
+        if (false === $this->hasScope($scope)) {
             throw new RemoteResourceServerException("insufficient_scope", "no permission for this call with granted scope");
         }
     }
 
     public function requireAnyScope(array $scope)
     {
-        if (FALSE === $this->hasAnyScope($scope)) {
+        if (false === $this->hasAnyScope($scope)) {
             throw new RemoteResourceServerException("insufficient_scope", "no permission for this call with granted scope");
         }
     }
@@ -175,40 +175,39 @@ class TokenIntrospection
      * At least one of the scopes should be granted.
      *
      * @param  array $scope the list of scopes of which one should be granted
-     * @return TRUE  when at least one of the requested scopes was granted,
-     *         FALSE when none were granted.
+     * @return true  when at least one of the requested scopes was granted,
+     *         false when none were granted.
      */
     public function hasAnyScope(array $scope)
     {
         foreach ($scope as $s) {
             if ($this->hasScope($s)) {
-                return TRUE;
+                return true;
             }
         }
 
-        return FALSE;
+        return false;
     }
 
     public function getEntitlement()
     {
-        return $this->_getKeyValue('x-entitlement');
+        return $this->getKeyValue('x-entitlement');
     }
 
     public function hasEntitlement($entitlement)
     {
-        return FALSE !== $this->getEntitlement() ? in_array($entitlement, $this->getEntitlement()) : FALSE;
+        return false !== $this->getEntitlement() ? in_array($entitlement, $this->getEntitlement()) : false;
     }
 
     public function requireEntitlement($entitlement)
     {
-        if (FALSE === $this->hasEntitlement($entitlement)) {
+        if (false === $this->hasEntitlement($entitlement)) {
             throw new RemoteResourceServerException("insufficient_entitlement", "no permission for this call with granted entitlement");
         }
     }
 
     public function getExt()
     {
-        return $this->_getKeyValue('x-ext');
+        return $this->getKeyValue('x-ext');
     }
-
 }

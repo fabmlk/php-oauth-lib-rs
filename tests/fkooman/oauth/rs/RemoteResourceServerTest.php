@@ -15,19 +15,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-require_once dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . "lib" . DIRECTORY_SEPARATOR . "OAuth" . DIRECTORY_SEPARATOR . "RemoteResourceServer.php";
+require_once 'vendor/autoload.php';
 
-use \OAuth\RemoteResourceServer as RemoteResourceServer;
-use \OAuth\RemoteResourceServerException as RemoteResourceServerException;
+use fkooman\oauth\rs\RemoteResourceServer;
+use fkooman\oauth\rs\RemoteResourceServerException;
 
 class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
 {
-
     private $_dataPath;
 
     public function setUp()
     {
-        $this->_dataPath = "file://" . dirname(__DIR__) . DIRECTORY_SEPARATOR . "data/";
+        $this->_dataPath = "file://" . dirname(dirname(dirname(__DIR__))) . DIRECTORY_SEPARATOR . "data/";
     }
 
     public function testBasicToken()

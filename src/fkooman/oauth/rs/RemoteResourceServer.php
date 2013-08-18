@@ -139,7 +139,7 @@ class RemoteResourceServer
 
         if (0 !== strpos($introspectionEndpoint, "file://")) {
             $separator = (FALSE === strpos($introspectionEndpoint, "?")) ? "?" : "&";
-            $introspectionEndpoint .= $separator . http_build_query($get);
+            $introspectionEndpoint .= $separator . http_build_query($get, null, "&");
         } else {
             // file cannot have query parameter, use accesstoken as JSON file instead
             $introspectionEndpoint .= $token . ".json";
@@ -148,10 +148,17 @@ class RemoteResourceServer
             CURLOPT_URL => $introspectionEndpoint,
             //CURLOPT_FOLLOWLOCATION => 1,
             CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_SSL_VERIFYPEER => 1,
-            CURLOPT_SSL_VERIFYHOST => 2,
         ))) {
             throw new RemoteResourceServerException("internal_server_error", "unable to set curl options");
+        }
+
+        if (!$this->_getConfigParameter("disableCertCheck", false, false)) {
+            if (FALSE === curl_setopt_array($curlChannel, array (
+                CURLOPT_SSL_VERIFYPEER => 1,
+                CURLOPT_SSL_VERIFYHOST => 2,
+            ))) {
+                throw new RemoteResourceServerException("internal_server_error", "unable to set curl options");
+            }
         }
 
         $output = curl_exec($curlChannel);

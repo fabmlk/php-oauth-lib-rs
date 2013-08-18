@@ -39,7 +39,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 001"), array());
         $this->assertEquals("fkooman", $introspection->getSub());
         $this->assertEquals("testclient", $introspection->getClientId());
-        $this->assertEquals(2366377846, $introspection->getExpiresAt());
+        $this->assertEquals(1766377846, $introspection->getExpiresAt());
         $this->assertEquals(1366376612, $introspection->getIssuedAt());
         $this->assertEquals("foo bar", $introspection->getScope());
         $this->assertEquals(array("urn:x-foo:service:access","urn:x-bar:privilege:admin"), $introspection->getEntitlement());
@@ -55,7 +55,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         $introspection = $rs->verifyRequest(array(), array("access_token" => "002"));
         $this->assertEquals("frko", $introspection->getSub());
         $this->assertEquals("testclient", $introspection->getClientId());
-        $this->assertEquals(2366377846, $introspection->getExpiresAt());
+        $this->assertEquals(1766377846, $introspection->getExpiresAt());
         $this->assertEquals(1366376612, $introspection->getIssuedAt());
         $this->assertEquals("a b c", $introspection->getScope());
         $this->assertFalse($introspection->getEntitlement());

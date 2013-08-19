@@ -35,7 +35,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
             "introspectionEndpoint" => $this->_dataPath,
         );
         $rs = new RemoteResourceServer($config);
-        $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 001"), array());
+        $introspection = $rs->verifyRequest("Bearer 001");
         $this->assertEquals("fkooman", $introspection->getSub());
         $this->assertEquals("testclient", $introspection->getClientId());
         $this->assertEquals(1766377846, $introspection->getExpiresAt());
@@ -51,7 +51,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
             "introspectionEndpoint" => $this->_dataPath,
         );
         $rs = new RemoteResourceServer($config);
-        $introspection = $rs->verifyRequest(array(), array("access_token" => "002"));
+        $introspection = $rs->verifyRequest(null, "002");
         $this->assertEquals("frko", $introspection->getSub());
         $this->assertEquals("testclient", $introspection->getClientId());
         $this->assertEquals(1766377846, $introspection->getExpiresAt());
@@ -68,7 +68,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         );
         try {
             $rs = new RemoteResourceServer($config);
-            $introspection = $rs->verifyRequest(array(), array("access_token" => "003"));
+            $introspection = $rs->verifyRequest(null, "003");
             $this->assertTrue(FALSE);
         } catch (RemoteResourceServerException $e) {
             $this->assertEquals("invalid_token", $e->getMessage());
@@ -85,7 +85,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         );
         try {
             $rs = new RemoteResourceServer($config);
-            $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 100"), array());
+            $introspection = $rs->verifyRequest("Bearer 100");
             $this->assertTrue(FALSE);
         } catch (RemoteResourceServerException $e) {
             $this->assertEquals("internal_server_error", $e->getMessage());
@@ -102,7 +102,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         );
         try {
             $rs = new RemoteResourceServer($config);
-            $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 101"), array());
+            $introspection = $rs->verifyRequest("Bearer 101");
             $this->assertTrue(FALSE);
         } catch (RemoteResourceServerException $e) {
             $this->assertEquals("internal_server_error", $e->getMessage());
@@ -119,7 +119,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
         );
         try {
             $rs = new RemoteResourceServer($config);
-            $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 003"), array("access_token" => "003"));
+            $introspection = $rs->verifyRequest("Bearer 003", "003");
             $this->assertTrue(FALSE);
         } catch (RemoteResourceServerException $e) {
             $this->assertEquals("invalid_request", $e->getMessage());
@@ -135,7 +135,7 @@ class RemoteResourceServerTest extends PHPUnit_Framework_TestCase
             "introspectionEndpoint" => $this->_dataPath,
         );
         $rs = new RemoteResourceServer($config);
-        $introspection = $rs->verifyRequest(array("Authorization" => "Bearer 004"), array());
+        $introspection = $rs->verifyRequest("Bearer 004");
         $this->assertTrue($introspection->getActive());
         $this->assertEquals(array("uid" => array("admin"), "schacHomeOrganization" => array("localhost")), $introspection->getExt());
     }

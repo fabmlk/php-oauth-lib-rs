@@ -85,8 +85,8 @@ class RemoteResourceServerException extends \Exception
         return $authenticateHeader;
     }
 
-    public function getContent()
+    public function getResponseAsArray()
     {
-        return json_encode(array("error" => $this->message, "error_description" => $this->description));
+        return array("code" => $this->responseCode, "error" => $this->message, "error_description" => $this->description);
     }
 }

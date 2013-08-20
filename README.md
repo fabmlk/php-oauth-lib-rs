@@ -91,13 +91,10 @@ This is a full example using this library.
 
     use fkooman\oauth\rs\RemoteResourceServer;
     use fkooman\oauth\rs\RemoteResourceServerException;
+    use Guzzle\Http\Client;
 
     try {
-        $rs = new RemoteResourceServer(
-            array(
-                "introspectionEndpoint" => "http://localhost/php-oauth/introspect.php",
-            )
-        );
+        $rs = new RemoteResourceServer(new Client("http://localhost/oauth/php-oauth/introspect.php"));
 
         // get the Authorization header (if provided)
         $requestHeaders = apache_request_headers();
@@ -108,8 +105,12 @@ This is a full example using this library.
 
         $introspection = $rs->verifyRequest($authorizationHeader, $accessTokenQueryParameter);
 
-        header("Content-Type: text/plain");
-        echo $introspection->getSub();
+        header("Content-Type: application/json");
+        if ($introspection->getActive()) {
+            echo json_encode(array("user_id" => $introspection->getSub()));
+        } else {
+            echo json_encode(array("active" => false));
+        }
     } catch (RemoteResourceServerException $e) {
         $e->setRealm("Foo");
         header("HTTP/1.1 " . $e->getResponseCode());
@@ -119,6 +120,8 @@ This is a full example using this library.
         }
         header("Content-Type: application/json");
         die(json_encode($e->getResponseAsArray()));
+    } catch (Exception $e) {
+        die($e->getMessage());
     }
 
 In "real" applications you want to be more resilient on how to obtain the 

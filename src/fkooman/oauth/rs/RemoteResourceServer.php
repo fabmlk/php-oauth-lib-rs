@@ -74,7 +74,7 @@ class RemoteResourceServer
         $this->validateTokenSyntax($token);
 
         $request = $this->httpClient->get();
-        $request->getQuery()->add(array("token" => $token));
+        $request->getQuery()->add("token", $token);
         $response = $request->send();
 
         return new TokenIntrospection($response->json());

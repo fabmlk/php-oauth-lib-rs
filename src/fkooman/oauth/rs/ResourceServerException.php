@@ -89,7 +89,7 @@ class ResourceServerException extends \Exception
     public function getBody()
     {
         $responseArray = array(
-            "code" => $this->getResponseCode(),
+            "code" => $this->getStatusCode(),
             "error" => $this->getMessage(),
             "error_description" => $this->getDescription()
         );

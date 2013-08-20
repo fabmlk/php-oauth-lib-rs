@@ -25,37 +25,33 @@ class TokenIntrospection
     public function __construct(array $response)
     {
         if (!isset($response['active']) || !is_bool($response['active'])) {
-            throw new RemoteResourceServerException("internal_server_error", "active key should be set and its value a boolean");
+            throw new ResourceServerException("internal_server_error", "active key should be set and its value a boolean");
         }
 
         if (isset($response['exp']) && (!is_int($response['exp']) || 0 > $response['exp'])) {
-            throw new RemoteResourceServerException("internal_server_error", "exp value must be positive integer");
+            throw new ResourceServerException("internal_server_error", "exp value must be positive integer");
         }
 
-        if (isset($response['exp']) && (!is_int($response['iat']) || 0 > $response['iat'])) {
-            throw new RemoteResourceServerException("internal_server_error", "iat value must be positive integer");
+        if (isset($response['iat']) && (!is_int($response['iat']) || 0 > $response['iat'])) {
+            throw new ResourceServerException("internal_server_error", "iat value must be positive integer");
         }
 
         if (isset($response['iat'])) {
             if (time() < $response['iat']) {
-                throw new RemoteResourceServerException("internal_server_error", "token issued in the future");
+                throw new ResourceServerException("internal_server_error", "token issued in the future");
             }
         }
 
         if (isset($response['exp']) && isset($response['iat'])) {
             if ($response['exp'] < $response['iat']) {
-                throw new RemoteResourceServerException("internal_server_error", "token expired before it was issued");
+                throw new ResourceServerException("internal_server_error", "token expired before it was issued");
             }
         }
 
         if (isset($response['exp'])) {
             if (time() > $response['exp']) {
-                throw new RemoteResourceServerException("invalid_token", "the token expired");
+                throw new ResourceServerException("invalid_token", "the token expired");
             }
-        }
-
-        if (isset($response['x-entitlement']) && !is_array($response['x-entitlement'])) {
-            throw new RemoteResourceServerException("internal_server_error", "x-entitlement value must be array");
         }
 
         $this->response = $response;
@@ -136,78 +132,16 @@ class TokenIntrospection
         return $this->getKeyValue('token_type');
     }
 
+    /**
+     * Get the complete response from the introspection endpoint
+     */
+    public function getToken()
+    {
+        return $this->response;
+    }
+
     private function getKeyValue($key)
     {
         return isset($this->response[$key]) ? $this->response[$key] : false;
-    }
-
-    /* ADDITIONAL HELPER METHODS */
-    public function getResourceOwnerId()
-    {
-        return $this->getSub();
-    }
-
-    public function getScopeAsArray()
-    {
-        return false !== $this->getScope() ? explode(" ", $this->getScope()) : false;
-    }
-
-    public function hasScope($scope)
-    {
-        return false !== $this->getScopeAsArray() ? in_array($scope, $this->getScopeAsArray()) : false;
-    }
-
-    public function requireScope($scope)
-    {
-        if (false === $this->hasScope($scope)) {
-            throw new RemoteResourceServerException("insufficient_scope", "no permission for this call with granted scope");
-        }
-    }
-
-    public function requireAnyScope(array $scope)
-    {
-        if (false === $this->hasAnyScope($scope)) {
-            throw new RemoteResourceServerException("insufficient_scope", "no permission for this call with granted scope");
-        }
-    }
-
-    /**
-     * At least one of the scopes should be granted.
-     *
-     * @param  array $scope the list of scopes of which one should be granted
-     * @return true  when at least one of the requested scopes was granted,
-     *         false when none were granted.
-     */
-    public function hasAnyScope(array $scope)
-    {
-        foreach ($scope as $s) {
-            if ($this->hasScope($s)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function getEntitlement()
-    {
-        return $this->getKeyValue('x-entitlement');
-    }
-
-    public function hasEntitlement($entitlement)
-    {
-        return false !== $this->getEntitlement() ? in_array($entitlement, $this->getEntitlement()) : false;
-    }
-
-    public function requireEntitlement($entitlement)
-    {
-        if (false === $this->hasEntitlement($entitlement)) {
-            throw new RemoteResourceServerException("insufficient_entitlement", "no permission for this call with granted entitlement");
-        }
-    }
-
-    public function getExt()
-    {
-        return $this->getKeyValue('x-ext');
     }
 }

@@ -25,7 +25,7 @@ Or of course any of the released versions by tag.
 
 To use the API:
 
-    $rs = new RemoteResourceServer(new Client("http://localhost/oauth/php-oauth/introspect.php"));
+    $rs = new ResourceServer(new Client("http://localhost/oauth/php-oauth/introspect.php"));
 
 Now you have to somehow get the `Authorization` header value and/or the `GET` 
 query parameters, see example below on how to do that.
@@ -49,19 +49,13 @@ of methods:
     public function getAud()
     public function getTokenType()
 
-    /* below are proprietary helper methods */
-    public function getResourceOwnerId()
-    public function getScopeAsArray()
-    public function hasScope($scope)
-    public function requireScope($scope)
-    public function requireAnyScope(array $scope)
-    public function hasAnyScope(array $scope)
-    public function getEntitlement()
-    public function hasEntitlement($entitlement)
-    public function requireEntitlement($entitlement)
-    public function getExt()
+If you read the specification they will make sense. In addition there is one 
+extra call `getToken()` that returns the complete response from the 
+introspection endpoint. This way you can also access proprietary fields.
 
-If you read the specification they will make sense.
+You **MUST** always first check whether the token was considered active using
+`getActive()` before using any of the other methods. Using the other methods on
+a non-active token will return `false`.
 
 ## Exceptions
 The library will return exceptions when using the `verifyRequest` method, you
@@ -71,17 +65,19 @@ using your own (HTTP) framework.
 The exception provides some helper methods to help with constructing a response
 for the client:
 
-* `getResponseCode()`
-* `getAuthenticateHeader()`
-* `setRealm($realm)`
-* `getResponseAsArray()`
+    public function getDescription()
+    public function setRealm($resourceServerRealm)
+    public function getRealm()
+    public function getStatusCode()
+    public function getAuthenticateHeader()
+    public function getBody()
 
-The `getResponseCode()` method will get you the (integer) HTTP response code
-to send to the client. The method `setRealm($realm)` allows you to set the 
-"realm" that will be part of the `WWW-Authenticate` header you can retrieve
-with the `getAuthenticateHeader()` method. The `getResponseAsArray()` method 
-gives you an array response you can send JSON encode and send back to the 
-client, this is OPTIONAL.
+The `getStatusCode()` method will get you the (integer) HTTP response code
+to send to the client. The method `setRealm($resourceServerRealm)` allows you 
+to set the "realm" that will be part of the `WWW-Authenticate` header you can
+retrieve with the `getAuthenticateHeader()` method. The `getBody()` method 
+gives you a JSON encoded response body you can send back to the client, this is 
+OPTIONAL.
 
 # Example
 This is a full example using this library.
@@ -89,12 +85,12 @@ This is a full example using this library.
     <?php
     require_once 'vendor/autoload.php';
 
-    use fkooman\oauth\rs\RemoteResourceServer;
-    use fkooman\oauth\rs\RemoteResourceServerException;
+    use fkooman\oauth\rs\ResourceServer;
+    use fkooman\oauth\rs\ResourceServerException;
     use Guzzle\Http\Client;
 
     try {
-        $rs = new RemoteResourceServer(new Client("http://localhost/oauth/php-oauth/introspect.php"));
+        $rs = new ResourceServer(new Client("http://localhost/oauth/php-oauth/introspect.php"));
 
         // get the Authorization header (if provided)
         $requestHeaders = apache_request_headers();
@@ -111,15 +107,15 @@ This is a full example using this library.
         } else {
             echo json_encode(array("active" => false));
         }
-    } catch (RemoteResourceServerException $e) {
+    } catch (ResourceServerException $e) {
         $e->setRealm("Foo");
-        header("HTTP/1.1 " . $e->getResponseCode());
+        header("HTTP/1.1 " . $e->getStatusCode());
         if (null !== $e->getAuthenticateHeader()) {
             // for "internal_server_error" responses no WWW-Authenticate header is set
             header("WWW-Authenticate: " . $e->getAuthenticateHeader());
         }
         header("Content-Type: application/json");
-        die(json_encode($e->getResponseAsArray()));
+        die($e->getBody());
     } catch (Exception $e) {
         // handle generic exceptions
         header("Content-Type: application/json");

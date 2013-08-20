@@ -18,7 +18,7 @@
 
 namespace fkooman\oauth\rs;
 
-class RemoteResourceServer
+class ResourceServer
 {
     private $httpClient;
 
@@ -41,17 +41,17 @@ class RemoteResourceServer
     {
         if (empty($authorizationHeader) && empty($accessTokenQueryParameter)) {
             // no token
-            throw new RemoteResourceServerException("no_token", "missing token");
+            throw new ResourceServerException("no_token", "missing token");
         }
 
         if (!empty($authorizationHeader) && !empty($accessTokenQueryParameter)) {
             // two tokens provided
-            throw new RemoteResourceServerException("invalid_request", "more than one method for including an access token used");
+            throw new ResourceServerException("invalid_request", "more than one method for including an access token used");
         }
 
         if (!empty($authorizationHeader)) {
             if (0 !== stripos($authorizationHeader, "Bearer ")) {
-                throw new RemoteResourceServerException("invalid_token", "not a bearer token");
+                throw new ResourceServerException("invalid_token", "not a bearer token");
             }
 
             return $this->verifyBearerToken(substr($authorizationHeader, 7));
@@ -65,7 +65,7 @@ class RemoteResourceServer
     {
         // b64token = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"="
         if (1 !== preg_match('|^[[:alpha:][:digit:]-._~+/]+=*$|', $token)) {
-            throw new RemoteResourceServerException("invalid_token", "the access token is not a valid b64token");
+            throw new ResourceServerException("invalid_token", "the access token is not a valid b64token");
         }
     }
 

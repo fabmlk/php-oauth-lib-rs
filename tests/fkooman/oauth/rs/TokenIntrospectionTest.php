@@ -18,52 +18,24 @@
 require_once 'vendor/autoload.php';
 
 use fkooman\oauth\rs\TokenIntrospection;
-use fkooman\oauth\rs\RemoteResourceServerException;
 
 class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
 {
     /**
      * @dataProvider validTokenProvider
      */
-    public function testTokenIntrospectionTest($token, $active, $expiresAt, $issuedAt, $scope, $entitlement, $clientId, $sub, $aud)
+    public function testTokenIntrospectionTest($token, $active, $expiresAt, $issuedAt, $scope, $clientId, $sub, $aud, $tokenType)
     {
         $i = new TokenIntrospection($token);
         $this->assertEquals($active, $i->getActive());
         $this->assertEquals($expiresAt, $i->getExpiresAt());
         $this->assertEquals($issuedAt, $i->getIssuedAt());
         $this->assertEquals($scope, $i->getScope());
-        if (FALSE !== $i->getScope()) {
-            $eScope = explode(" ", $i->getScope());
-            $this->assertEquals($eScope, $i->getScopeAsArray());
-            for ( $j = 0; $j < count($eScope); $j++) {
-                $this->assertTrue($i->hasScope($eScope[$j]));
-                $this->assertTrue($i->hasAnyScope(array($eScope[$j], "bogus")));
-                $i->requireScope($eScope[$j]);
-            }
-        }
-        $e = $i->getEntitlement();
-        if (FALSE !== $e) {
-            for ( $j = 0; $j < count($e); $j++) {
-                $this->assertTrue($i->hasEntitlement($e[$j]));
-                $i->requireEntitlement($e[$j]);
-            }
-        }
         $this->assertEquals($clientId, $i->getClientId());
-        $this->assertEquals($sub, $i->getResourceOwnerId());
         $this->assertEquals($sub, $i->getSub());
         $this->assertEquals($aud, $i->getAud());
-        try {
-            $i->requireScope("bogus");
-            $this->assertTrue(FALSE);
-        } catch (RemoteResourceServerException $e) {
-        }
-        try {
-            $i->requireEntitlement("bogus");
-            $this->assertTrue(FALSE);
-        } catch (RemoteResourceServerException $e) {
-        }
-
-        $this->assertFalse($i->hasAnyScope(array("foo")));
+        $this->assertEquals($tokenType, $i->getTokenType());
+        $this->assertEquals($token, $i->getToken());
     }
 
     public function validTokenProvider()
@@ -73,19 +45,14 @@ class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
 
         return array(
             array(
-                array("active" => TRUE),
-                TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
+                array("active" => false),
+                false, false, false, false, false, false, false, false,
             ),
 
             array(
-                array("active" => TRUE, "exp" => $exp, "iat" => $iat, "scope" => "read write", "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar"),
-                TRUE, $exp, $iat, "read write", FALSE, "foo", "fkooman", "foobar"
-            ),
-
-            array(
-                array("active" => TRUE, "exp" => $exp, "iat" => $iat, "scope" => "read write", "x-entitlement" => array("manager", "owner", "user"), "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar"),
-                TRUE, $exp, $iat, "read write", array("manager", "owner", "user"), "foo", "fkooman", "foobar"
-            ),
+                array("active" => true, "exp" => $exp, "iat" => $iat, "scope" => "read write", "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar", "token_type" => "bearer"),
+                true, $exp, $iat, "read write", "foo", "fkooman", "foobar", "bearer"
+            )
         );
     }
 

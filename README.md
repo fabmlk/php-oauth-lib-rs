@@ -21,13 +21,11 @@ in `composer.json`:
 
     $ php composer.phar require fkooman/php-oauth-lib-rs dev-master
 
-Or of course any of the released versions. To use the API:
+Or of course any of the released versions by tag.
 
-    $rs = new RemoteResourceServer(
-        array(
-            "introspectionEndpoint" => "http://localhost/php-oauth/introspect.php",
-        )
-    );
+To use the API:
+
+    $rs = new RemoteResourceServer(new Client("http://localhost/oauth/php-oauth/introspect.php"));
 
 Now you have to somehow get the `Authorization` header value and/or the `GET` 
 query parameters, see example below on how to do that.
@@ -50,6 +48,8 @@ of methods:
     public function getSub()
     public function getAud()
     public function getTokenType()
+
+    /* below are proprietary helper methods */
     public function getResourceOwnerId()
     public function getScopeAsArray()
     public function hasScope($scope)
@@ -121,7 +121,9 @@ This is a full example using this library.
         header("Content-Type: application/json");
         die(json_encode($e->getResponseAsArray()));
     } catch (Exception $e) {
-        die($e->getMessage());
+        // handle generic exceptions
+        header("Content-Type: application/json");
+        die(json_encode($e->getMessage()));
     }
 
 In "real" applications you want to be more resilient on how to obtain the 
@@ -136,5 +138,4 @@ following Apache configuration snippet:
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
 That will make `HTTP_AUTHORIZATION` available in `$_SERVER`. If you use some
-framework it may already take care of this.
-
+framework it may already take care of this for you.

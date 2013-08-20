@@ -20,11 +20,15 @@ namespace fkooman\oauth\rs;
 
 class RemoteResourceServer
 {
-    private $config;
+    private $httpClient;
 
-    public function __construct(array $c)
+    /**
+     * @param \Guzzle\Http\Client $httpClient
+     *          the client pointing to the introspection endpoint
+     */
+    public function __construct(\Guzzle\Http\Client $httpClient)
     {
-        $this->config = $c;
+        $this->httpClient = $httpClient;
     }
 
     /**
@@ -57,89 +61,22 @@ class RemoteResourceServer
         }
     }
 
-    public function verifyBearerToken($token)
+    private function validateTokenSyntax($token)
     {
         // b64token = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"="
         if (1 !== preg_match('|^[[:alpha:][:digit:]-._~+/]+=*$|', $token)) {
             throw new RemoteResourceServerException("invalid_token", "the access token is not a valid b64token");
         }
-
-        $introspectionEndpoint = $this->getConfigParameter("introspectionEndpoint");
-        $get = array("token" => $token);
-
-        if (!function_exists("curl_init")) {
-            throw new RemoteResourceServerException("internal_server_error", "php curl module not available");
-        }
-
-        $curlChannel = curl_init();
-        if (false === $curlChannel) {
-            throw new RemoteResourceServerException("internal_server_error", "unable to initialize curl");
-        }
-
-        if (0 !== strpos($introspectionEndpoint, "file://")) {
-            $separator = (false === strpos($introspectionEndpoint, "?")) ? "?" : "&";
-            $introspectionEndpoint .= $separator . http_build_query($get, null, "&");
-        } else {
-            // file cannot have query parameter, use accesstoken as JSON file instead
-            $introspectionEndpoint .= $token . ".json";
-        }
-
-        $disableCertCheck = $this->getConfigParameter("disableCertCheck", false, false);
-        $curlOptions = array(
-            CURLOPT_URL => $introspectionEndpoint,
-            //CURLOPT_FOLLOWLOCATION => 1,
-            CURLOPT_RETURNTRANSFER => 1,
-            CURLOPT_SSL_VERIFYPEER => $disableCertCheck ? 0 : 1,
-            CURLOPT_SSL_VERIFYHOST => $disableCertCheck ? 0 : 2,
-        );
-
-        if (false === curl_setopt_array($curlChannel, $curlOptions)) {
-            throw new RemoteResourceServerException("internal_server_error", "unable to set curl options");
-        }
-
-        $output = curl_exec($curlChannel);
-
-        if (false === $output) {
-            $error = curl_error($curlChannel);
-            throw new RemoteResourceServerException("internal_server_error", sprintf("unable to contact introspection endpoint [%s]", $error));
-        }
-
-        $httpCode = curl_getinfo($curlChannel, CURLINFO_HTTP_CODE);
-        curl_close($curlChannel);
-
-        if (0 !== strpos($introspectionEndpoint, "file://")) {
-            // not a file
-            if (200 !== $httpCode) {
-                throw new RemoteResourceServerException("internal_server_error", "unexpected response code from introspection endpoint");
-            }
-        }
-
-        $data = json_decode($output, true);
-        $jsonError = json_last_error();
-        if (JSON_ERROR_NONE !== $jsonError) {
-            throw new RemoteResourceServerException("internal_server_error", "unable to decode response from introspection endpoint");
-        }
-        if (!is_array($data) || !isset($data['active']) || !is_bool($data['active'])) {
-            throw new RemoteResourceServerException("internal_server_error", "unexpected response from introspection endpoint");
-        }
-
-        if (!$data['active']) {
-            throw new RemoteResourceServerException("invalid_token", "the token is not active");
-        }
-
-        return new TokenIntrospection($data);
     }
 
-    private function getConfigParameter($key, $required = true, $default = null)
+    public function verifyBearerToken($token)
     {
-        if (!array_key_exists($key, $this->config)) {
-            if ($required) {
-                throw new RemoteResourceServerException("internal_server_error", "missing required configuration parameter");
-            } else {
-                return $default;
-            }
-        }
+        $this->validateTokenSyntax($token);
 
-        return $this->config[$key];
+        $request = $this->httpClient->get();
+        $request->getQuery()->add(array("token" => $token));
+        $response = $request->send();
+
+        return new TokenIntrospection($response->json());
     }
 }

@@ -73,10 +73,20 @@ class ResourceServer
     {
         $this->validateTokenSyntax($token);
 
-        $request = $this->httpClient->get();
-        $request->getQuery()->add("token", $token);
-        $response = $request->send();
+        try {
+            $request = $this->httpClient->get();
+            $request->getQuery()->add("token", $token);
+            $response = $request->send();
 
-        return new TokenIntrospection($response->json());
+            $responseData = $response->json();
+            if (!is_array($responseData)) {
+                throw new ResourceServerException("internal_server_error", "malformed response data from introspection endpoint");
+            }
+
+            return new TokenIntrospection($responseData);
+        } catch (\Guzzle\Common\Exception\RuntimeException $e) {
+            // error when contacting endpoint, or no JSON data returned
+            throw new ResourceServerException("internal_server_error", $e->getMessage());
+        }
     }
 }

@@ -21,39 +21,119 @@ use fkooman\oauth\rs\TokenIntrospection;
 
 class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
 {
-    /**
-     * @dataProvider validTokenProvider
-     */
-    public function testTokenIntrospectionTest($token, $active, $expiresAt, $issuedAt, $scope, $clientId, $sub, $aud, $tokenType)
+    public function testNotActive()
     {
-        $i = new TokenIntrospection($token);
-        $this->assertEquals($active, $i->getActive());
-        $this->assertEquals($expiresAt, $i->getExpiresAt());
-        $this->assertEquals($issuedAt, $i->getIssuedAt());
-        $this->assertEquals($scope, $i->getScope());
-        $this->assertEquals($clientId, $i->getClientId());
-        $this->assertEquals($sub, $i->getSub());
-        $this->assertEquals($aud, $i->getAud());
-        $this->assertEquals($tokenType, $i->getTokenType());
-        $this->assertEquals($token, $i->getToken());
+        $t = new TokenIntrospection(array("active" => false, "sub" => "foo"));
+        $this->assertFalse($t->getActive());
+        // when not active, other fields must return false
+        $this->assertFalse($t->getSub());
     }
 
-    public function validTokenProvider()
+    public function testComplete()
     {
-        $iat = time();
-        $exp = $iat + 100;
+        $now = time();
 
-        return array(
+        $t = new TokenIntrospection(
             array(
-                array("active" => false),
-                false, false, false, false, false, false, false, false,
-            ),
-
-            array(
-                array("active" => true, "exp" => $exp, "iat" => $iat, "scope" => "read write", "client_id" => "foo", "sub" => "fkooman", "aud" => "foobar", "token_type" => "bearer"),
-                true, $exp, $iat, "read write", "foo", "fkooman", "foobar", "bearer"
+                "active" => true,
+                "exp" => $now + 1000,
+                "iat" => $now - 1000,
+                "sub" => "foo",
+                "client_id" => "bar",
+                "aud" => "foobar",
+                "scope" => "foo bar baz",
+                "token_type" => "bearer",
+                "x-ext" => array("proprietary", "extension", "data")
             )
         );
+        $this->assertTrue($t->getActive());
+        $this->assertEquals($now + 1000, $t->getExpiresAt());
+        $this->assertEquals($now - 1000, $t->getIssuedAt());
+        $this->assertEquals("foo", $t->getSub());
+        $this->assertEquals("bar", $t->getClientId());
+        $this->assertEquals("foobar", $t->getAud());
+        $this->assertEquals("foo bar baz", $t->getScope());
+        $this->assertEquals("bearer", $t->getTokenType());
+        $this->assertEquals(array("proprietary", "extension", "data"), $t->getToken()["x-ext"]);
     }
 
+    public function testActive()
+    {
+        $t = new TokenIntrospection(array("active" => true));
+        $this->assertTrue($t->getActive());
+        // non exiting key should return false
+        $this->assertFalse($t->getSub());
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedExceptionMessage active key should be set and its value a boolean
+     */
+    public function testMissingActive()
+    {
+        $t = new TokenIntrospection(array());
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedExceptionMessage the token expired
+     */
+    public function testExpired()
+    {
+        $t = new TokenIntrospection(array("active" => true, "exp" => time()-1000));
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedExceptionMessage token issued in the future
+     */
+    public function testIssueTimeInFuture()
+    {
+        $t = new TokenIntrospection(array("active" => true, "iat" => time()+1000));
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedExceptionMessage token expired before it was issued
+     */
+    public function testExpiresBeforeIssued()
+    {
+        $t = new TokenIntrospection(array("active" => true, "iat" => time()-500, "exp" => time()-1000));
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedExceptionMessage iat value must be positive integer
+     */
+    public function testNegativeIssueTime()
+    {
+        $t = new TokenIntrospection(array("active" => true, "iat" => -4));
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedExceptionMessage iat value must be positive integer
+     */
+    public function testNonIntIssueTime()
+    {
+        $t = new TokenIntrospection(array("active" => true, "iat" => "1234567"));
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedExceptionMessage exp value must be positive integer
+     */
+    public function testNonIntExpiryTime()
+    {
+        $t = new TokenIntrospection(array("active" => true, "exp" => "1234567"));
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedExceptionMessage exp value must be positive integer
+     */
+    public function testNegativeExpiryTime()
+    {
+        $t = new TokenIntrospection(array("active" => true, "exp" => -4));
+    }
 }

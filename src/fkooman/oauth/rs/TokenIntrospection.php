@@ -25,32 +25,32 @@ class TokenIntrospection
     public function __construct(array $response)
     {
         if (!isset($response['active']) || !is_bool($response['active'])) {
-            throw new ResourceServerException("internal_server_error", "active key should be set and its value a boolean");
+            throw new TokenIntrospectionException("active key should be set and its value a boolean");
         }
 
         if (isset($response['exp']) && (!is_int($response['exp']) || 0 > $response['exp'])) {
-            throw new ResourceServerException("internal_server_error", "exp value must be positive integer");
+            throw new TokenIntrospectionException("exp value must be positive integer");
         }
 
         if (isset($response['iat']) && (!is_int($response['iat']) || 0 > $response['iat'])) {
-            throw new ResourceServerException("internal_server_error", "iat value must be positive integer");
+            throw new TokenIntrospectionException("iat value must be positive integer");
         }
 
         if (isset($response['iat'])) {
             if (time() < $response['iat']) {
-                throw new ResourceServerException("internal_server_error", "token issued in the future");
+                throw new TokenIntrospectionException("token issued in the future");
             }
         }
 
         if (isset($response['exp']) && isset($response['iat'])) {
             if ($response['exp'] < $response['iat']) {
-                throw new ResourceServerException("internal_server_error", "token expired before it was issued");
+                throw new TokenIntrospectionException("token expired before it was issued");
             }
         }
 
         if (isset($response['exp'])) {
             if (time() > $response['exp']) {
-                throw new ResourceServerException("invalid_token", "the token expired");
+                throw new TokenIntrospectionException("the token expired");
             }
         }
 
@@ -142,6 +142,13 @@ class TokenIntrospection
 
     private function getKeyValue($key)
     {
-        return isset($this->response[$key]) ? $this->response[$key] : false;
+        if (!$this->response['active']) {
+            return false;
+        }
+        if (!isset($this->response[$key])) {
+            return false;
+        }
+
+        return $this->response[$key];
     }
 }

@@ -61,8 +61,6 @@ class ResourceServerException extends \Exception
                 return 401;
             case "insufficient_scope":
                 return 403;
-            case "insufficient_entitlement":
-                return 403;
             case "internal_server_error":
                 return 500;
             default:

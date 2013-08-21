@@ -22,143 +22,95 @@ use fkooman\oauth\rs\ResourceServerException;
 
 class ResourceServerTest extends PHPUnit_Framework_TestCase
 {
-    public function testBasic()
+    public function testValidResponse()
     {
         $plugin = new Guzzle\Plugin\Mock\MockPlugin();
         $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, '{"active": true}'));
         $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
-        $introspect = $rs->verifyRequest("Bearer 001");
-        $this->assertTrue($introspect->getActive());
+        $this->assertInstanceOf("\\fkooman\\oauth\\rs\\TokenIntrospection", $rs->verifyRequest("Bearer 001"));
     }
 
-    public function testBasicToken()
-    {
-        $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, $this->getFile("001")));
-        $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
-        $rs = new ResourceServer($client);
-
-        $introspection = $rs->verifyRequest("Bearer 001");
-        $this->assertEquals("fkooman", $introspection->getSub());
-        $this->assertEquals("testclient", $introspection->getClientId());
-        $this->assertEquals(1766377846, $introspection->getExpiresAt());
-        $this->assertEquals(1366376612, $introspection->getIssuedAt());
-        $this->assertEquals("foo bar", $introspection->getScope());
-        $this->assertTrue($introspection->getActive());
-    }
-
-    private function getFile($file)
-    {
-        return file_get_contents(dirname(dirname(dirname(__DIR__))) . DIRECTORY_SEPARATOR . "data" . DIRECTORY_SEPARATOR . $file . ".json");
-    }
-
-    public function testBasicTokenNoEntitlement()
-    {
-        $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, $this->getFile("002")));
-        $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
-        $rs = new ResourceServer($client);
-
-        $introspection = $rs->verifyRequest(null, "002");
-        $this->assertEquals("frko", $introspection->getSub());
-        $this->assertEquals("testclient", $introspection->getClientId());
-        $this->assertEquals(1766377846, $introspection->getExpiresAt());
-        $this->assertEquals(1366376612, $introspection->getIssuedAt());
-        $this->assertEquals("a b c", $introspection->getScope());
-        $this->assertTrue($introspection->getActive());
-    }
-
-    public function testInvalidToken()
-    {
-        $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, $this->getFile("003")));
-        $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
-        $rs = new ResourceServer($client);
-        $introspection = $rs->verifyRequest(null, "003");
-        $this->assertFalse($introspection->getActive());
-        $this->assertFalse($introspection->getSub());
-    }
-
-    public function testInvalidIntrospectionResponse()
-    {
-        try {
-            $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-            $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, $this->getFile("100")));
-            $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
-            $client->addSubscriber($plugin);
-            $rs = new ResourceServer($client);
-            $introspection = $rs->verifyRequest("Bearer 100");
-            $this->assertTrue(false);
-        } catch (ResourceServerException $e) {
-            $this->assertEquals("internal_server_error", $e->getMessage());
-            $this->assertEquals("active key should be set and its value a boolean", $e->getDescription());
-            $this->assertEquals(500, $e->getStatusCode());
-            $this->assertNull($e->getAuthenticateHeader());
-        }
-    }
-
-/*
-    // FIXME: this returns a Guzzle error, not a tokenintrospection error
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage internal_server_error
+     */
     public function testNoJsonResponse()
     {
-        try {
-            $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-            $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, $this->getFile("101")));
-            $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
-            $client->addSubscriber($plugin);
-            $rs = new ResourceServer($client);
-
-            $introspection = $rs->verifyRequest("Bearer 101");
-            $this->assertTrue(false);
-        } catch (ResourceServerException $e) {
-            $this->assertEquals("internal_server_error", $e->getMessage());
-            $this->assertEquals("unable to decode response from introspection endpoint", $e->getDescription());
-            $this->assertEquals(500, $e->getStatusCode());
-            $this->assertNull($e->getAuthenticateHeader());
-        }
+        $plugin = new Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, 'BROKEN'));
+        $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
+        $client->addSubscriber($plugin);
+        $rs = new ResourceServer($client);
+        $rs->verifyRequest("Bearer 001");
     }
-*/
 
-    public function testMultipleBearerTokens()
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage internal_server_error
+     */
+    public function testNoJsonArrayResponse()
     {
-        try {
-            $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-            $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, $this->getFile("003")));
-            $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
-            $client->addSubscriber($plugin);
-            $rs = new ResourceServer($client);
-
-            $introspection = $rs->verifyRequest("Bearer 003", "003");
-            $this->assertTrue(false);
-        } catch (ResourceServerException $e) {
-            $this->assertEquals("invalid_request", $e->getMessage());
-            $this->assertEquals("more than one method for including an access token used", $e->getDescription());
-            $this->assertEquals(400, $e->getStatusCode());
-            $this->assertEquals('Bearer realm="Resource Server",error="invalid_request",error_description="more than one method for including an access token used"', $e->getAuthenticateHeader());
-        }
+        $plugin = new Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, 'true'));
+        $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
+        $client->addSubscriber($plugin);
+        $rs = new ResourceServer($client);
+        $rs->verifyRequest("Bearer 001");
     }
 
-    public function testNoBearerTokens()
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage internal_server_error
+     */
+    public function testErrorResponseCode()
     {
-        try {
-            $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-            $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, $this->getFile("003")));
-            $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
-            $client->addSubscriber($plugin);
-            $rs = new ResourceServer($client);
-            $introspection = $rs->verifyRequest(array(), array());
-            $this->assertTrue(false);
-        } catch (ResourceServerException $e) {
-            $this->assertEquals("no_token", $e->getMessage());
-            $this->assertEquals("missing token", $e->getDescription());
-            $this->assertEquals(401, $e->getStatusCode());
-            $this->assertEquals('Bearer realm="Resource Server"', $e->getAuthenticateHeader());
-        }
+        $plugin = new Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new Guzzle\Http\Message\Response(404, null, 'Not Found'));
+        $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
+        $client->addSubscriber($plugin);
+        $rs = new ResourceServer($client);
+        $rs->verifyRequest("Bearer 001");
     }
 
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage invalid_request
+     */
+    public function testMultipleTokenMethods()
+    {
+        $rs = new ResourceServer(new Guzzle\Http\Client());
+        $introspection = $rs->verifyRequest("Bearer 003", "003");
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage no_token
+     */
+    public function testNoTokenMethods()
+    {
+        $rs = new ResourceServer(new Guzzle\Http\Client());
+        $introspection = $rs->verifyRequest();
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage invalid_token
+     */
+    public function testNotBearerAuthorizationHeader()
+    {
+        $rs = new ResourceServer(new Guzzle\Http\Client());
+        $introspection = $rs->verifyRequest("Basic Zm9vOmJhcg==");
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage invalid_token
+     */
+    public function testInvalidTokenCharacters()
+    {
+        $rs = new ResourceServer(new Guzzle\Http\Client());
+        $introspection = $rs->verifyRequest(null, ",./'_=09211#4$");
+    }
 }

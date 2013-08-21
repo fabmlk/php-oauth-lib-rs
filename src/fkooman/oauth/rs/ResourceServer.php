@@ -41,7 +41,10 @@ class ResourceServer
     {
         if (!empty($authorizationHeader) && !empty($accessTokenQueryParameter)) {
             // two tokens provided
-            throw new ResourceServerException("invalid_request", "more than one method for including an access token used");
+            throw new ResourceServerException(
+                "invalid_request",
+                "more than one method for including an access token used"
+            );
         }
         if (!empty($authorizationHeader)) {
             if (0 !== stripos($authorizationHeader, "Bearer ")) {
@@ -60,7 +63,10 @@ class ResourceServer
     {
         // b64token = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"="
         if (1 !== preg_match('|^[[:alpha:][:digit:]-._~+/]+=*$|', $token)) {
-            throw new ResourceServerException("invalid_token", "the access token is not a valid b64token");
+            throw new ResourceServerException(
+                "invalid_token",
+                "the access token is not a valid b64token"
+            );
         }
     }
 
@@ -75,13 +81,19 @@ class ResourceServer
 
             $responseData = $response->json();
             if (!is_array($responseData)) {
-                throw new ResourceServerException("internal_server_error", "malformed response data from introspection endpoint");
+                throw new ResourceServerException(
+                    "internal_server_error",
+                    "malformed response data from introspection endpoint"
+                );
             }
 
             return new TokenIntrospection($responseData);
         } catch (\Guzzle\Common\Exception\RuntimeException $e) {
             // error when contacting endpoint, or no JSON data returned
-            throw new ResourceServerException("internal_server_error", "unable to contact introspection endpoint or malformed response data");
+            throw new ResourceServerException(
+                "internal_server_error",
+                "unable to contact introspection endpoint or malformed response data"
+            );
         }
     }
 }

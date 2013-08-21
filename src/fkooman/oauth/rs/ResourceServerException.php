@@ -78,7 +78,12 @@ class ResourceServerException extends \Exception
             // back an explicit error message
             return sprintf('Bearer realm="%s"', $this->getRealm());
         } else {
-            return sprintf('Bearer realm="%s",error="%s",error_description="%s"', $this->getRealm(), $this->getMessage(), $this->getDescription());
+            return sprintf(
+                'Bearer realm="%s",error="%s",error_description="%s"',
+                $this->getRealm(),
+                $this->getMessage(),
+                $this->getDescription()
+            );
         }
     }
 }

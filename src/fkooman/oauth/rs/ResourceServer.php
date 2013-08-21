@@ -39,16 +39,10 @@ class ResourceServer
      */
     public function verifyRequest($authorizationHeader = null, $accessTokenQueryParameter = null)
     {
-        if (empty($authorizationHeader) && empty($accessTokenQueryParameter)) {
-            // no token
-            throw new ResourceServerException("no_token", "missing token");
-        }
-
         if (!empty($authorizationHeader) && !empty($accessTokenQueryParameter)) {
             // two tokens provided
             throw new ResourceServerException("invalid_request", "more than one method for including an access token used");
         }
-
         if (!empty($authorizationHeader)) {
             if (0 !== stripos($authorizationHeader, "Bearer ")) {
                 throw new ResourceServerException("invalid_token", "not a bearer token");
@@ -59,6 +53,7 @@ class ResourceServer
         if (!empty($accessTokenQueryParameter)) {
             return $this->verifyBearerToken($accessTokenQueryParameter);
         }
+        throw new ResourceServerException("no_token", "missing token");
     }
 
     private function validateTokenSyntax($token)
@@ -86,7 +81,7 @@ class ResourceServer
             return new TokenIntrospection($responseData);
         } catch (\Guzzle\Common\Exception\RuntimeException $e) {
             // error when contacting endpoint, or no JSON data returned
-            throw new ResourceServerException("internal_server_error", $e->getMessage());
+            throw new ResourceServerException("internal_server_error", "unable to contact introspection endpoint or malformed response data");
         }
     }
 }

@@ -115,7 +115,15 @@ This is a full example using this library.
             header("WWW-Authenticate: " . $e->getAuthenticateHeader());
         }
         header("Content-Type: application/json");
-        die($e->getBody());
+        die(
+            json_encode(
+                array(
+                    "error" => $e->getMessage(), 
+                    "code" => $e->getStatusCode(), 
+                    "error_description" => $e->getDescription()
+                )
+            )
+        );
     } catch (Exception $e) {
         // handle generic exceptions
         header("Content-Type: application/json");

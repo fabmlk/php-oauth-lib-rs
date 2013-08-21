@@ -83,15 +83,4 @@ class ResourceServerException extends \Exception
             return sprintf('Bearer realm="%s",error="%s",error_description="%s"', $this->getRealm(), $this->getMessage(), $this->getDescription());
         }
     }
-
-    public function getBody()
-    {
-        $responseArray = array(
-            "code" => $this->getStatusCode(),
-            "error" => $this->getMessage(),
-            "error_description" => $this->getDescription()
-        );
-
-        return json_encode($responseArray);
-    }
 }

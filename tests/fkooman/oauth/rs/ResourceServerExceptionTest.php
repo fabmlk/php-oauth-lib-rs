@@ -43,4 +43,32 @@ class ResourceServerExceptionTest extends PHPUnit_Framework_TestCase
         $this->assertEquals('Bearer realm="Foo"', $e->getAuthenticateHeader());
     }
 
+    public function testInternalServerError()
+    {
+        $e = new ResourceServerException("internal_server_error", "something really bad happened");
+        $this->assertEquals("Resource Server", $e->getRealm());
+        $this->assertEquals(500, $e->getStatusCode());
+        $this->assertEquals("internal_server_error", $e->getMessage());
+        $this->assertEquals("something really bad happened", $e->getDescription());
+        $this->assertNull($e->getAuthenticateHeader());
+    }
+
+    public function testInsufficientScope()
+    {
+        $e = new ResourceServerException("insufficient_scope", "scope 'foo' required");
+        $this->assertEquals(403, $e->getStatusCode());
+        $this->assertEquals('Bearer realm="Resource Server",error="insufficient_scope",error_description="scope \'foo\' required"', $e->getAuthenticateHeader());
+    }
+
+    public function testInvalidRequest()
+    {
+        $e = new ResourceServerException("invalid_request", "request not valid");
+        $this->assertEquals(400, $e->getStatusCode());
+    }
+
+    public function testUnsupportedType()
+    {
+        $e = new ResourceServerException("foo", "bar");
+        $this->assertEquals(400, $e->getStatusCode());
+    }
 }

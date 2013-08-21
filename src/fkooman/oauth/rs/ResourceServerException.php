@@ -38,10 +38,8 @@ class ResourceServerException extends \Exception
 
     public function setRealm($resourceServerRealm)
     {
-        if (is_string($resourceServerRealm) && !empty($resourceServerRealm)) {
+        if (is_string($resourceServerRealm) && 0 < strlen($resourceServerRealm)) {
             $this->realm = $resourceServerRealm;
-        } else {
-            $this->realm = "Resource Server";
         }
     }
 

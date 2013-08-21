@@ -1,5 +1,10 @@
 # Release History
 
+## 0.3.0
+* Again, major API overhaul, see README
+* Use Guzzle for HTTP requests to token introspection endpoint
+* Finish unit tests (100% coverage)
+
 ## 0.2.0
 * API overhaul, see README
 * No longer support handling requests for the caller

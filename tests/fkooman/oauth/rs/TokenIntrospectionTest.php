@@ -54,7 +54,8 @@ class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
         $this->assertEquals("foobar", $t->getAud());
         $this->assertEquals("foo bar baz", $t->getScope());
         $this->assertEquals("bearer", $t->getTokenType());
-        $this->assertEquals(array("proprietary", "extension", "data"), $t->getToken()["x-ext"]);
+        $token = $t->getToken();
+        $this->assertEquals(array("proprietary", "extension", "data"), $token["x-ext"]);
     }
 
     public function testActive()

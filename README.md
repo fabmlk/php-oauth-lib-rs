@@ -1,3 +1,5 @@
+[![Build Status](https://www.travis-ci.org/fkooman/php-oauth-lib-rs.png?branch=master)](https://www.travis-ci.org/fkooman/php-oauth-lib-rs)
+
 # Introduction
 This is a library to implement an OAuth 2.0 resource server (RS). The library
 can be used by any service that wants to accept OAuth 2.0 bearer tokens.

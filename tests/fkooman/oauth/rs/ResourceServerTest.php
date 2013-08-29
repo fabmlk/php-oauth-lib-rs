@@ -16,21 +16,40 @@
  * limitations under the License.
  */
 
-require_once 'vendor/autoload.php';
+namespace fkooman\oauth\rs;
 
-use fkooman\oauth\rs\ResourceServer;
-use fkooman\oauth\rs\ResourceServerException;
-
-class ResourceServerTest extends PHPUnit_Framework_TestCase
+class ResourceServerTest extends \PHPUnit_Framework_TestCase
 {
     public function testValidResponse()
     {
-        $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, '{"active": true}'));
-        $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
+        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": true}'));
+        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
         $this->assertInstanceOf("\\fkooman\\oauth\\rs\\TokenIntrospection", $rs->verifyRequest("Bearer 001"));
+    }
+
+    public function testValidResponseSettingAuthorizationHeader()
+    {
+        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": true}'));
+        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
+        $client->addSubscriber($plugin);
+        $rs = new ResourceServer($client);
+        $rs->setAuthorizationHeader("Bearer 001");
+        $this->assertInstanceOf("\\fkooman\\oauth\\rs\\TokenIntrospection", $rs->verifyToken());
+    }
+
+    public function testValidResponseSettingQueryParameter()
+    {
+        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": true}'));
+        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
+        $client->addSubscriber($plugin);
+        $rs = new ResourceServer($client);
+        $rs->setAccessTokenQueryParameter("001");
+        $this->assertInstanceOf("\\fkooman\\oauth\\rs\\TokenIntrospection", $rs->verifyToken());
     }
 
     /**
@@ -39,9 +58,9 @@ class ResourceServerTest extends PHPUnit_Framework_TestCase
      */
     public function testNoJsonResponse()
     {
-        $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, 'BROKEN'));
-        $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
+        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, 'BROKEN'));
+        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
         $rs->verifyRequest("Bearer 001");
@@ -53,9 +72,9 @@ class ResourceServerTest extends PHPUnit_Framework_TestCase
      */
     public function testNoJsonArrayResponse()
     {
-        $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new Guzzle\Http\Message\Response(200, null, 'true'));
-        $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
+        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, 'true'));
+        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
         $rs->verifyRequest("Bearer 001");
@@ -67,9 +86,9 @@ class ResourceServerTest extends PHPUnit_Framework_TestCase
      */
     public function testErrorResponseCode()
     {
-        $plugin = new Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new Guzzle\Http\Message\Response(404, null, 'Not Found'));
-        $client = new Guzzle\Http\Client("https://auth.example.org/introspect");
+        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new \Guzzle\Http\Message\Response(404, null, 'Not Found'));
+        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
         $rs->verifyRequest("Bearer 001");
@@ -81,7 +100,7 @@ class ResourceServerTest extends PHPUnit_Framework_TestCase
      */
     public function testMultipleTokenMethods()
     {
-        $rs = new ResourceServer(new Guzzle\Http\Client());
+        $rs = new ResourceServer(new \Guzzle\Http\Client());
         $introspection = $rs->verifyRequest("Bearer 003", "003");
     }
 
@@ -91,17 +110,17 @@ class ResourceServerTest extends PHPUnit_Framework_TestCase
      */
     public function testNoTokenMethods()
     {
-        $rs = new ResourceServer(new Guzzle\Http\Client());
+        $rs = new ResourceServer(new \Guzzle\Http\Client());
         $introspection = $rs->verifyRequest();
     }
 
     /**
      * @expectedException \fkooman\oauth\rs\ResourceServerException
-     * @expectedExceptionMessage invalid_token
+     * @expectedExceptionMessage no_token
      */
     public function testNotBearerAuthorizationHeader()
     {
-        $rs = new ResourceServer(new Guzzle\Http\Client());
+        $rs = new ResourceServer(new \Guzzle\Http\Client());
         $introspection = $rs->verifyRequest("Basic Zm9vOmJhcg==");
     }
 
@@ -111,7 +130,7 @@ class ResourceServerTest extends PHPUnit_Framework_TestCase
      */
     public function testInvalidTokenCharacters()
     {
-        $rs = new ResourceServer(new Guzzle\Http\Client());
+        $rs = new ResourceServer(new \Guzzle\Http\Client());
         $introspection = $rs->verifyRequest(null, ",./'_=09211#4$");
     }
 }

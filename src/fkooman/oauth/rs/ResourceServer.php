@@ -20,7 +20,11 @@ namespace fkooman\oauth\rs;
 
 class ResourceServer
 {
+    /* @var \Guzzle\Http\Client */
     private $httpClient;
+
+    /* @var string|null */
+    private $bearerToken;
 
     /**
      * @param \Guzzle\Http\Client $httpClient
@@ -29,54 +33,76 @@ class ResourceServer
     public function __construct(\Guzzle\Http\Client $httpClient)
     {
         $this->httpClient = $httpClient;
+        $this->bearerToken = null;
     }
 
-    /**
-     * @param string authorizationHeader
-     *     the value of the Authorzation header in the form: "Bearer xyz"
-     * @param string accessTokenQueryParameter
-     *     the value of the "access_token" query parameter in the form: "xyz"
-     */
-    public function verifyRequest($authorizationHeader = null, $accessTokenQueryParameter = null)
+    public function setAuthorizationHeader($authorizationHeader)
     {
-        if (!empty($authorizationHeader) && !empty($accessTokenQueryParameter)) {
-            // two tokens provided
+        // must be string
+        if (!is_string($authorizationHeader)) {
+            return;
+        }
+        // string should have at least lenght 8
+        if (7 >= strlen($authorizationHeader)) {
+            return;
+        }
+        // string should start with "Bearer "
+        if (0 !== stripos($authorizationHeader, "Bearer ")) {
+            return;
+        }
+        // check if token was already set
+        if (null !== $this->bearerToken) {
             throw new ResourceServerException(
                 "invalid_request",
                 "more than one method for including an access token used"
             );
         }
-        if (!empty($authorizationHeader)) {
-            if (0 !== stripos($authorizationHeader, "Bearer ")) {
-                throw new ResourceServerException("invalid_token", "not a bearer token");
-            }
 
-            return $this->verifyBearerToken(substr($authorizationHeader, 7));
-        }
-        if (!empty($accessTokenQueryParameter)) {
-            return $this->verifyBearerToken($accessTokenQueryParameter);
-        }
-        throw new ResourceServerException("no_token", "missing token");
+        $this->bearerToken = substr($authorizationHeader, 7);
     }
 
-    private function validateTokenSyntax($token)
+    public function setAccessTokenQueryParameter($accessTokenQueryParameter)
     {
-        // b64token = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"="
-        if (1 !== preg_match('|^[[:alpha:][:digit:]-._~+/]+=*$|', $token)) {
+        // must be string
+        if (!is_string($accessTokenQueryParameter)) {
+            return;
+        }
+        // string should have at least lenght 1
+        if (0 >= strlen($accessTokenQueryParameter)) {
+            return;
+        }
+        // check if token was already set
+        if (null !== $this->bearerToken) {
             throw new ResourceServerException(
-                "invalid_token",
-                "the access token is not a valid b64token"
+                "invalid_request",
+                "more than one method for including an access token used"
             );
         }
+
+        $this->bearerToken = $accessTokenQueryParameter;
     }
 
-    public function verifyBearerToken($token)
+    /**
+     * @deprecated
+     */
+    public function verifyRequest($authorizationHeader = null, $accessTokenQueryParameter = null)
     {
-        $this->validateTokenSyntax($token);
+        $this->setAuthorizationHeader($authorizationHeader);
+        $this->setAccessTokenQueryParameter($accessTokenQueryParameter);
+
+        return $this->verifyToken();
+    }
+
+    public function verifyToken()
+    {
+        if (null === $this->bearerToken) {
+            throw new ResourceServerException("no_token", "missing token");
+        }
+        $this->validateTokenSyntax($this->bearerToken);
 
         try {
             $request = $this->httpClient->get();
-            $request->getQuery()->add("token", $token);
+            $request->getQuery()->add("token", $this->bearerToken);
             $response = $request->send();
 
             $responseData = $response->json();
@@ -93,6 +119,17 @@ class ResourceServer
             throw new ResourceServerException(
                 "internal_server_error",
                 "unable to contact introspection endpoint or malformed response data"
+            );
+        }
+    }
+
+    private function validateTokenSyntax($token)
+    {
+        // b64token = 1*( ALPHA / DIGIT / "-" / "." / "_" / "~" / "+" / "/" ) *"="
+        if (1 !== preg_match('|^[[:alpha:][:digit:]-._~+/]+=*$|', $token)) {
+            throw new ResourceServerException(
+                "invalid_token",
+                "the access token is not a valid b64token"
             );
         }
     }

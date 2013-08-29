@@ -16,11 +16,9 @@
  * limitations under the License.
  */
 
-require_once 'vendor/autoload.php';
+namespace fkooman\oauth\rs;
 
-use fkooman\oauth\rs\ResourceServerException;
-
-class ResourceServerExceptionTest extends PHPUnit_Framework_TestCase
+class ResourceServerExceptionTest extends \PHPUnit_Framework_TestCase
 {
     public function testBasic()
     {

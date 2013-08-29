@@ -156,3 +156,12 @@ following Apache configuration snippet:
 
 That will make `HTTP_AUTHORIZATION` available in `$_SERVER`. If you use some
 framework it may already take care of this for you.
+
+# Tests
+In order to run the tests you can use [PHPUnit](http://phpunit.de). You can run 
+the tests like this:
+
+    $ php /path/to/phpunit.phar --bootstrap vendor/autoload.php tests
+
+from the directory. Make sure you first run 
+`php /path/to/composer.phar install` before running the tests.

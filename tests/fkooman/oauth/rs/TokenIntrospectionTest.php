@@ -16,11 +16,9 @@
  * limitations under the License.
  */
 
-require_once 'vendor/autoload.php';
+namespace fkooman\oauth\rs;
 
-use fkooman\oauth\rs\TokenIntrospection;
-
-class TokenIntrospectionTest extends PHPUnit_Framework_TestCase
+class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
 {
     public function testNotActive()
     {

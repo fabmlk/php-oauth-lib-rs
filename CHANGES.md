@@ -1,5 +1,11 @@
 # Release History
 
+## 0.4.0
+* Again, API change, see README (first set AuthorizationHeader and/or 
+  AccessTokenQueryString before calling verifyToken() instead of them being
+  a parameter of verifyRequest())
+* Add phpunit.xml.dist (to set bootstrap info)
+
 ## 0.3.0
 * Again, major API overhaul, see README
 * Use Guzzle for HTTP requests to token introspection endpoint

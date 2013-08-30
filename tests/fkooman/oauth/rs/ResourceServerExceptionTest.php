@@ -28,7 +28,10 @@ class ResourceServerExceptionTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(401, $e->getStatusCode());
         $this->assertEquals("invalid_token", $e->getMessage());
         $this->assertEquals("the token is invalid", $e->getDescription());
-        $this->assertEquals('Bearer realm="Foo",error="invalid_token",error_description="the token is invalid"', $e->getAuthenticateHeader());
+        $this->assertEquals(
+            'Bearer realm="Foo",error="invalid_token",error_description="the token is invalid"',
+            $e->getAuthenticateHeader()
+        );
     }
 
     public function testNoToken()
@@ -56,7 +59,10 @@ class ResourceServerExceptionTest extends \PHPUnit_Framework_TestCase
     {
         $e = new ResourceServerException("insufficient_scope", "scope 'foo' required");
         $this->assertEquals(403, $e->getStatusCode());
-        $this->assertEquals('Bearer realm="Resource Server",error="insufficient_scope",error_description="scope \'foo\' required"', $e->getAuthenticateHeader());
+        $this->assertEquals(
+            'Bearer realm="Resource Server",error="insufficient_scope",error_description="scope \'foo\' required"',
+            $e->getAuthenticateHeader()
+        );
     }
 
     public function testInvalidRequest()

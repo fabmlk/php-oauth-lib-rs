@@ -42,7 +42,7 @@ class ResourceServer
         if (!is_string($authorizationHeader)) {
             return;
         }
-        // string should have at least lenght 8
+        // string should have at least length 8
         if (7 >= strlen($authorizationHeader)) {
             return;
         }
@@ -67,7 +67,7 @@ class ResourceServer
         if (!is_string($accessTokenQueryParameter)) {
             return;
         }
-        // string should have at least lenght 1
+        // string should have at least length 1
         if (0 >= strlen($accessTokenQueryParameter)) {
             return;
         }
@@ -80,17 +80,6 @@ class ResourceServer
         }
 
         $this->bearerToken = $accessTokenQueryParameter;
-    }
-
-    /**
-     * @deprecated
-     */
-    public function verifyRequest($authorizationHeader = null, $accessTokenQueryParameter = null)
-    {
-        $this->setAuthorizationHeader($authorizationHeader);
-        $this->setAccessTokenQueryParameter($accessTokenQueryParameter);
-
-        return $this->verifyToken();
     }
 
     public function verifyToken()

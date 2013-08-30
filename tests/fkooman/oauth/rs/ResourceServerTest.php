@@ -27,16 +27,6 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
         $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
-        $this->assertInstanceOf("\\fkooman\\oauth\\rs\\TokenIntrospection", $rs->verifyRequest("Bearer 001"));
-    }
-
-    public function testValidResponseSettingAuthorizationHeader()
-    {
-        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": true}'));
-        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
-        $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
         $this->assertInstanceOf("\\fkooman\\oauth\\rs\\TokenIntrospection", $rs->verifyToken());
     }
@@ -63,7 +53,8 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
         $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
-        $rs->verifyRequest("Bearer 001");
+        $rs->setAuthorizationHeader("Bearer 001");
+        $rs->verifyToken();
     }
 
     /**
@@ -77,7 +68,8 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
         $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
-        $rs->verifyRequest("Bearer 001");
+        $rs->setAuthorizationHeader("Bearer 001");
+        $rs->verifyToken();
     }
 
     /**
@@ -91,17 +83,30 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
         $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
-        $rs->verifyRequest("Bearer 001");
+        $rs->setAuthorizationHeader("Bearer 001");
+        $rs->verifyToken();
     }
 
     /**
      * @expectedException \fkooman\oauth\rs\ResourceServerException
      * @expectedExceptionMessage invalid_request
      */
-    public function testMultipleTokenMethods()
+    public function testMultipleTokenMethodsHeaderFirst()
     {
         $rs = new ResourceServer(new \Guzzle\Http\Client());
-        $introspection = $rs->verifyRequest("Bearer 003", "003");
+        $rs->setAuthorizationHeader("Bearer 003");
+        $rs->setAccessTokenQueryParameter("003");
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage invalid_request
+     */
+    public function testMultipleTokenMethodsQueryParameterFirst()
+    {
+        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs->setAccessTokenQueryParameter("003");
+        $rs->setAuthorizationHeader("Bearer 003");
     }
 
     /**
@@ -111,7 +116,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     public function testNoTokenMethods()
     {
         $rs = new ResourceServer(new \Guzzle\Http\Client());
-        $introspection = $rs->verifyRequest();
+        $introspection = $rs->verifyToken();
     }
 
     /**
@@ -121,7 +126,63 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     public function testNotBearerAuthorizationHeader()
     {
         $rs = new ResourceServer(new \Guzzle\Http\Client());
-        $introspection = $rs->verifyRequest("Basic Zm9vOmJhcg==");
+        $rs->setAuthorizationHeader("Basic Zm9vOmJhcg==");
+        $introspection = $rs->verifyToken();
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage no_token
+     */
+    public function testWrongAuthorizationHeader()
+    {
+        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs->setAuthorizationHeader("Foo");
+        $introspection = $rs->verifyToken();
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage no_token
+     */
+    public function testNoStringAuthorizationHeader()
+    {
+        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs->setAuthorizationHeader(456);
+        $introspection = $rs->verifyToken();
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage no_token
+     */
+    public function testEmptyStringAuthorizationHeader()
+    {
+        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs->setAuthorizationHeader("Bearer ");
+        $introspection = $rs->verifyToken();
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage no_token
+     */
+    public function testEmptyStringAccessTokenQueryParameter()
+    {
+        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs->setAccessTokenQueryParameter("");
+        $introspection = $rs->verifyToken();
+    }
+
+    /**
+     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedExceptionMessage no_token
+     */
+    public function testNoStringAccessTokenQueryParameter()
+    {
+        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs->setAccessTokenQueryParameter(123);
+        $introspection = $rs->verifyToken();
     }
 
     /**
@@ -131,6 +192,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     public function testInvalidTokenCharacters()
     {
         $rs = new ResourceServer(new \Guzzle\Http\Client());
-        $introspection = $rs->verifyRequest(null, ",./'_=09211#4$");
+        $rs->setAccessTokenQueryParameter(",./'_=09211#4$");
+        $introspection = $rs->verifyToken();
     }
 }

@@ -27,19 +27,28 @@ Or of course any of the released versions by tag.
 
 To use the API:
 
-    $rs = new ResourceServer(new Client("http://localhost/oauth/php-oauth/introspect.php"));
+    $resourceServer = new ResourceServer(
+        new Client(
+            "http://localhost/oauth/php-oauth/introspect.php"
+        )
+    );
 
 Now you have to somehow get the `Authorization` header value and/or the `GET` 
-query parameters, see example below on how to do that.
+query parameters, see the full example below on how to do that:
 
-    verifyRequest($authorizationHeader, $accessTokenQueryParameter)
+    $resourceServer->setAuthorizationHeader(
+        "Bearer foo"
+    );
 
-The `$authorizationHeader` would be of the form `Bearer xyz`, and the 
-`$accessTokenQueryParameter` would just be `xyz`. The value of the parameter to
-`verifyRequest` can be `null` which means that particular option is not used. 
-They can however not both be `null`, and also not both be set!
+    $resourceServer->setAccessTokenQueryParameter(
+        "foo"
+    );
 
-The `verifyRequest` method returns a `TokenIntrospection` object with a number
+Now you can verify the token:
+
+    $resourceServer->verifyToken();
+
+The `verifyToken` method returns a `TokenIntrospection` object with a number
 of methods:
 
     public function getActive()
@@ -60,7 +69,7 @@ You **MUST** always first check whether the token was considered active using
 a non-active token will return `false`.
 
 ## Exceptions
-The library will return exceptions when using the `verifyRequest` method, you
+The library will return exceptions when using the `verifyToken` method, you
 can catch these exceptions and send the appropriate response to the client
 using your own (HTTP) framework.
 
@@ -72,14 +81,11 @@ for the client:
     public function getRealm()
     public function getStatusCode()
     public function getAuthenticateHeader()
-    public function getBody()
 
 The `getStatusCode()` method will get you the (integer) HTTP response code
 to send to the client. The method `setRealm($resourceServerRealm)` allows you 
 to set the "realm" that will be part of the `WWW-Authenticate` header you can
-retrieve with the `getAuthenticateHeader()` method. The `getBody()` method 
-gives you a JSON encoded response body you can send back to the client, this is 
-OPTIONAL.
+retrieve with the `getAuthenticateHeader()` method.
 
 # Example
 This is a full example using this library.
@@ -89,33 +95,40 @@ This is a full example using this library.
 
     use fkooman\oauth\rs\ResourceServer;
     use fkooman\oauth\rs\ResourceServerException;
+
     use Guzzle\Http\Client;
 
     try {
         // initialize the Resource Server, point it to introspection endpoint
-        $rs = new ResourceServer(new Client("http://localhost/oauth/php-oauth/introspect.php"));
+        $resourceServer = new ResourceServer(
+            new Client(
+                "http://localhost/oauth/php-oauth/introspect.php"
+            )
+        );
 
         // get the Authorization header (if provided, through ugly Apache function)
         $requestHeaders = apache_request_headers();
         $authorizationHeader = isset($requestHeaders['Authorization']) ? $requestHeaders['Authorization'] : null;
+        $resourceServer->setAuthorizationHeader($authorizationHeader);
 
         // get the query parameter (if provided)
         $accessTokenQueryParameter = isset($_GET['access_token']) ? $_GET['access_token'] : null;
+        $resourceServer->setAccessTokenQueryParameter($accessTokenQueryParameter);
 
-        // now verify the Authorization header and/or query parameter
-        $introspection = $rs->verifyRequest($authorizationHeader, $accessTokenQueryParameter);
+        // now verify the token
+        $tokenIntrospection = $resourceServer->verifyToken();
 
         // check if the token is active
-        if ($introspection->getActive()) {
+        if ($tokenIntrospection->getActive()) {
             // check we have the required scope 'foo'
             // NOTE: only getActive is required to be available, any of the other
             // introspection method objects can return "false" when not provided
             // by the introspection endpoint
-            $scope = explode(" ", $introspection->getScope());
+            $scope = explode(" ", $tokenIntrospection->getScope());
             if (!in_array("foo", $scope)) {
                 throw new ResourceServerException("insufficient_scope", "scope 'foo' required");
             }
-            $output = array("user_id" => $introspection->getSub());
+            $output = array("user_id" => $tokenIntrospection->getSub());
         } else {
             $output = array("active" => false);
         }
@@ -129,13 +142,12 @@ This is a full example using this library.
             // for "internal_server_error" responses no WWW-Authenticate header is set
             header("WWW-Authenticate: " . $e->getAuthenticateHeader());
         }
-        header("Content-Type: application/json");
         $output = array(
-                "error" => $e->getMessage(),
-                "code" => $e->getStatusCode(),
-                "error_description" => $e->getDescription()
-            )
+            "error" => $e->getMessage(),
+            "code" => $e->getStatusCode(),
+            "error_description" => $e->getDescription()
         );
+        header("Content-Type: application/json");
         echo json_encode($output);
     } catch (Exception $e) {
         // handle generic exceptions
@@ -161,7 +173,7 @@ framework it may already take care of this for you.
 In order to run the tests you can use [PHPUnit](http://phpunit.de). You can run 
 the tests like this:
 
-    $ php /path/to/phpunit.phar --bootstrap vendor/autoload.php tests
+    $ php /path/to/phpunit.phar tests
 
 from the directory. Make sure you first run 
 `php /path/to/composer.phar install` before running the tests.

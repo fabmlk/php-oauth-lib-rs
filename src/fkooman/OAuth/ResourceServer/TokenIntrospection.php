@@ -28,11 +28,6 @@ class TokenIntrospection
             throw new TokenIntrospectionException("active key should be set and its value a boolean");
         }
 
-        // check if it is active
-        if (!$response['active']) {
-            throw new TokenIntrospectionException("the token is not active");
-        }
-
         if (isset($response['exp']) && (!is_int($response['exp']) || 0 > $response['exp'])) {
             throw new TokenIntrospectionException("exp value must be positive integer");
         }
@@ -41,23 +36,17 @@ class TokenIntrospection
             throw new TokenIntrospectionException("iat value must be positive integer");
         }
 
+        // check whether token was not issued in the future
         if (isset($response['iat'])) {
             if (time() < $response['iat']) {
                 throw new TokenIntrospectionException("token issued in the future");
             }
         }
 
-        // check if it was not expired before it was issues
+        // check whether token did not expire before it was issued
         if (isset($response['exp']) && isset($response['iat'])) {
             if ($response['exp'] < $response['iat']) {
                 throw new TokenIntrospectionException("token expired before it was issued");
-            }
-        }
-
-        // check if it was not expired
-        if (isset($response['exp'])) {
-            if (time() > $response['exp']) {
-                throw new TokenIntrospectionException("the token expired");
             }
         }
 

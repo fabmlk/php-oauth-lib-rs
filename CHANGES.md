@@ -1,5 +1,9 @@
 # Release History
 
+## 0.6.0
+* Again, API change, ResourceServerException will be thrown if token is not
+  active, or when it expired
+
 ## 0.5.0
 * Again, API change, change namespace to fkooman\OAuth\ResourceServer from
   fkooman\oauth\as to be more in line with the other projects

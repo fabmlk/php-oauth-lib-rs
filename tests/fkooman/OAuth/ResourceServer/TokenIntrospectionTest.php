@@ -20,13 +20,10 @@ namespace fkooman\OAuth\ResourceServer;
 
 class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
-     * @expectedExceptionMessage the token is not active
-     */
     public function testNotActive()
     {
-        $t = new TokenIntrospection(array("active" => false, "sub" => "foo"));
+        $t = new TokenIntrospection(array("active" => false));
+        $this->assertFalse($t->getActive());
     }
 
     public function testComplete()
@@ -73,15 +70,6 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
     public function testMissingActive()
     {
         $t = new TokenIntrospection(array());
-    }
-
-    /**
-     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
-     * @expectedExceptionMessage the token expired
-     */
-    public function testExpired()
-    {
-        $t = new TokenIntrospection(array("active" => true, "exp" => time()-1000));
     }
 
     /**

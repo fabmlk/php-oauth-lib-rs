@@ -102,7 +102,20 @@ class ResourceServer
                 );
             }
 
-            return new TokenIntrospection($responseData);
+            $tokenIntrospection = new TokenIntrospection($responseData);
+
+            // check if the token was active
+            if (!$tokenIntrospection->getActive()) {
+                throw new ResourceServerException("invalid_token", "the access token is not active");
+            }
+            // check if it was not expired
+            if (false !== $tokenIntrospection->getExpiresAt()) {
+                if (time() > $tokenIntrospection->getExpiresAt()) {
+                    throw new ResourceServerException("invalid_token", "the access token expired");
+                }
+            }
+
+            return $tokenIntrospection;
         } catch (\Guzzle\Common\Exception\RuntimeException $e) {
             // error when contacting endpoint, or no JSON data returned
             throw new ResourceServerException(

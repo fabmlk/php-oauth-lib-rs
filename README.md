@@ -114,20 +114,14 @@ This is a full example using this library.
         // now verify the token
         $tokenIntrospection = $resourceServer->verifyToken();
 
-        // check if the token is active
-        if ($tokenIntrospection->getActive()) {
-            // check we have the required scope 'foo'
-            // NOTE: only getActive is required to be available, any of the other
-            // introspection method objects can return "false" when not provided
-            // by the introspection endpoint
-            $scope = explode(" ", $tokenIntrospection->getScope());
-            if (!in_array("foo", $scope)) {
-                throw new ResourceServerException("insufficient_scope", "scope 'foo' required");
-            }
-            $output = array("user_id" => $tokenIntrospection->getSub());
-        } else {
-            $output = array("active" => false);
+        // NOTE: only getActive() is required to be available, any of the other
+        // introspection method objects can return "false" when not provided
+        // by the introspection endpoint, so you MUST check for that!
+        $scope = explode(" ", $tokenIntrospection->getScope());
+        if (!in_array("foo", $scope)) {
+            throw new ResourceServerException("insufficient_scope", "scope 'foo' required");
         }
+        $output = array("user_id" => $tokenIntrospection->getSub());
 
         header("Content-Type: application/json");
         echo json_encode($output);

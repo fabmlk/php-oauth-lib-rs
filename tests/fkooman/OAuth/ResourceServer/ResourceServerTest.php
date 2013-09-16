@@ -20,7 +20,7 @@ namespace fkooman\OAuth\ResourceServer;
 
 class ResourceServerTest extends \PHPUnit_Framework_TestCase
 {
-    public function testValidResponse()
+    public function testValidToken()
     {
         $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
         $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": true}'));
@@ -29,6 +29,59 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
         $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken());
+    }
+
+    /**
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
+     * @expectedExceptionMessage invalid_token
+     */
+    public function testNonActiveToken()
+    {
+        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": false}'));
+        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
+        $client->addSubscriber($plugin);
+        $rs = new ResourceServer($client);
+        $rs->setAuthorizationHeader("Bearer 001");
+        $rs->verifyToken();
+    }
+
+    public function testNonExpiredToken()
+    {
+        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(
+            new \Guzzle\Http\Message\Response(
+                200,
+                null,
+                sprintf('{"active": true, "exp": %d}', time() + 3600)
+            )
+        );
+        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
+        $client->addSubscriber($plugin);
+        $rs = new ResourceServer($client);
+        $rs->setAuthorizationHeader("Bearer 001");
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken());
+    }
+
+    /**
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
+     * @expectedExceptionMessage invalid_token
+     */
+    public function testExpiredToken()
+    {
+        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(
+            new \Guzzle\Http\Message\Response(
+                200,
+                null,
+                sprintf('{"active": true, "exp": %d}', time() - 3600)
+            )
+        );
+        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
+        $client->addSubscriber($plugin);
+        $rs = new ResourceServer($client);
+        $rs->setAuthorizationHeader("Bearer 001");
+        $rs->verifyToken();
     }
 
     public function testValidResponseSettingQueryParameter()

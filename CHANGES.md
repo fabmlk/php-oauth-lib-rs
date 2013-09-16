@@ -1,9 +1,15 @@
 # Release History
 
+## 0.5.0
+* Again, API change, change namespace to fkooman\OAuth\ResourceServer from
+  fkooman\oauth\as to be more in line with the other projects
+* Always throw TokenIntrospectionException when token is not valid, i.e.:
+  `{"active":false}`
+
 ## 0.4.0
 * Again, API change, see README (first set AuthorizationHeader and/or 
-  AccessTokenQueryString before calling verifyToken() instead of them being
-  a parameter of verifyRequest())
+  AccessTokenQueryString before calling verifyToken() instead of them being a 
+  parameter of verifyRequest())
 * Add phpunit.xml.dist (to set bootstrap info)
 
 ## 0.3.0
@@ -14,8 +20,8 @@
 ## 0.2.0
 * API overhaul, see README
 * No longer support handling requests for the caller
-* Update Exception to return array instead of JSON with getContent(), and
-  call it getResponseAsArray() now
+* Update Exception to return array instead of JSON with getContent(), and call 
+  it getResponseAsArray() now
 
 ## 0.1.1
 * Update code to better match PSR-2 guidelines

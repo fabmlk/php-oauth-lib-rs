@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-namespace fkooman\oauth\rs;
+namespace fkooman\OAuth\ResourceServer;
 
 class TokenIntrospection
 {
@@ -26,6 +26,11 @@ class TokenIntrospection
     {
         if (!isset($response['active']) || !is_bool($response['active'])) {
             throw new TokenIntrospectionException("active key should be set and its value a boolean");
+        }
+
+        // check if it is active
+        if (!$response['active']) {
+            throw new TokenIntrospectionException("the token is not active");
         }
 
         if (isset($response['exp']) && (!is_int($response['exp']) || 0 > $response['exp'])) {
@@ -42,12 +47,14 @@ class TokenIntrospection
             }
         }
 
+        // check if it was not expired before it was issues
         if (isset($response['exp']) && isset($response['iat'])) {
             if ($response['exp'] < $response['iat']) {
                 throw new TokenIntrospectionException("token expired before it was issued");
             }
         }
 
+        // check if it was not expired
         if (isset($response['exp'])) {
             if (time() > $response['exp']) {
                 throw new TokenIntrospectionException("the token expired");
@@ -142,9 +149,6 @@ class TokenIntrospection
 
     private function getKeyValue($key)
     {
-        if (!$this->response['active']) {
-            return false;
-        }
         if (!isset($this->response[$key])) {
             return false;
         }

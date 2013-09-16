@@ -8,7 +8,7 @@
     ],
     "autoload": {
         "psr-0": {
-            "fkooman\\oauth\\rs\\": "src/"
+            "fkooman\\OAuth\\ResourceServer\\": "src/"
         }
     },
     "description": "Library for implementing OAuth 2.0 resource servers",

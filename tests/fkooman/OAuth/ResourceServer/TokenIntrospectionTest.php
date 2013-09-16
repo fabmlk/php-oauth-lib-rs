@@ -16,16 +16,17 @@
  * limitations under the License.
  */
 
-namespace fkooman\oauth\rs;
+namespace fkooman\OAuth\ResourceServer;
 
 class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
 {
+    /**
+     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
+     * @expectedExceptionMessage the token is not active
+     */
     public function testNotActive()
     {
         $t = new TokenIntrospection(array("active" => false, "sub" => "foo"));
-        $this->assertFalse($t->getActive());
-        // when not active, other fields must return false
-        $this->assertFalse($t->getSub());
     }
 
     public function testComplete()
@@ -66,7 +67,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
      * @expectedExceptionMessage active key should be set and its value a boolean
      */
     public function testMissingActive()
@@ -75,7 +76,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
      * @expectedExceptionMessage the token expired
      */
     public function testExpired()
@@ -84,7 +85,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
      * @expectedExceptionMessage token issued in the future
      */
     public function testIssueTimeInFuture()
@@ -93,7 +94,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
      * @expectedExceptionMessage token expired before it was issued
      */
     public function testExpiresBeforeIssued()
@@ -102,7 +103,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
      * @expectedExceptionMessage iat value must be positive integer
      */
     public function testNegativeIssueTime()
@@ -111,7 +112,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
      * @expectedExceptionMessage iat value must be positive integer
      */
     public function testNonIntIssueTime()
@@ -120,7 +121,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
      * @expectedExceptionMessage exp value must be positive integer
      */
     public function testNonIntExpiryTime()
@@ -129,7 +130,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\TokenIntrospectionException
+     * @expectedException fkooman\OAuth\ResourceServer\TokenIntrospectionException
      * @expectedExceptionMessage exp value must be positive integer
      */
     public function testNegativeExpiryTime()

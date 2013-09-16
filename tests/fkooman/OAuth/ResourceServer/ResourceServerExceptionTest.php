@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-namespace fkooman\oauth\rs;
+namespace fkooman\OAuth\ResourceServer;
 
 class ResourceServerExceptionTest extends \PHPUnit_Framework_TestCase
 {

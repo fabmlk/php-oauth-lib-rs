@@ -64,10 +64,6 @@ If you read the specification they will make sense. In addition there is one
 extra call `getToken()` that returns the complete response from the 
 introspection endpoint. This way you can also access proprietary fields.
 
-You **MUST** always first check whether the token was considered active using
-`getActive()` before using any of the other methods. Using the other methods on
-a non-active token will return `false`.
-
 ## Exceptions
 The library will return exceptions when using the `verifyToken` method, you
 can catch these exceptions and send the appropriate response to the client
@@ -93,8 +89,8 @@ This is a full example using this library.
     <?php
     require_once 'vendor/autoload.php';
 
-    use fkooman\oauth\rs\ResourceServer;
-    use fkooman\oauth\rs\ResourceServerException;
+    use fkooman\OAuth\ResourceServer\ResourceServer;
+    use fkooman\OAuth\ResourceServer\ResourceServerException;
 
     use Guzzle\Http\Client;
 

@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-namespace fkooman\oauth\rs;
+namespace fkooman\OAuth\ResourceServer;
 
 class ResourceServerTest extends \PHPUnit_Framework_TestCase
 {
@@ -28,7 +28,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-        $this->assertInstanceOf("\\fkooman\\oauth\\rs\\TokenIntrospection", $rs->verifyToken());
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken());
     }
 
     public function testValidResponseSettingQueryParameter()
@@ -39,11 +39,11 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
         $client->addSubscriber($plugin);
         $rs = new ResourceServer($client);
         $rs->setAccessTokenQueryParameter("001");
-        $this->assertInstanceOf("\\fkooman\\oauth\\rs\\TokenIntrospection", $rs->verifyToken());
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken());
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage internal_server_error
      */
     public function testNoJsonResponse()
@@ -58,7 +58,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage internal_server_error
      */
     public function testNoJsonArrayResponse()
@@ -73,7 +73,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage internal_server_error
      */
     public function testErrorResponseCode()
@@ -88,7 +88,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage invalid_request
      */
     public function testMultipleTokenMethodsHeaderFirst()
@@ -99,7 +99,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage invalid_request
      */
     public function testMultipleTokenMethodsQueryParameterFirst()
@@ -110,7 +110,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage no_token
      */
     public function testNoTokenMethods()
@@ -120,7 +120,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage no_token
      */
     public function testNotBearerAuthorizationHeader()
@@ -131,7 +131,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage no_token
      */
     public function testWrongAuthorizationHeader()
@@ -142,7 +142,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage no_token
      */
     public function testNoStringAuthorizationHeader()
@@ -153,7 +153,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage no_token
      */
     public function testEmptyStringAuthorizationHeader()
@@ -164,7 +164,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage no_token
      */
     public function testEmptyStringAccessTokenQueryParameter()
@@ -175,7 +175,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage no_token
      */
     public function testNoStringAccessTokenQueryParameter()
@@ -186,7 +186,7 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @expectedException \fkooman\oauth\rs\ResourceServerException
+     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage invalid_token
      */
     public function testInvalidTokenCharacters()

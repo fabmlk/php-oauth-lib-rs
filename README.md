@@ -159,6 +159,15 @@ following Apache configuration snippet:
 That will make `HTTP_AUTHORIZATION` available in `$_SERVER`. If you use some
 framework it may already take care of this for you.
 
+# API Documentation
+The API documenation can be generated using
+[Sami](http://sami.sensiolabs.org/), Sami is part of the `require-dev` section
+in the Composer file.
+
+    $ php vendor/bin/sami.php update doc/php-oauth-lib-rs.php
+
+This will output HTML in the `build/` directory.
+
 # Tests
 In order to run the tests you can use [PHPUnit](http://phpunit.de). You can run 
 the tests like this:

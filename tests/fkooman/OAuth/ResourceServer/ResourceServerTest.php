@@ -144,22 +144,12 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
      * @expectedExceptionMessage invalid_request
      */
-    public function testMultipleTokenMethodsHeaderFirst()
+    public function testMultipleTokenMethods()
     {
         $rs = new ResourceServer(new \Guzzle\Http\Client());
         $rs->setAuthorizationHeader("Bearer 003");
         $rs->setAccessTokenQueryParameter("003");
-    }
-
-    /**
-     * @expectedException fkooman\OAuth\ResourceServer\ResourceServerException
-     * @expectedExceptionMessage invalid_request
-     */
-    public function testMultipleTokenMethodsQueryParameterFirst()
-    {
-        $rs = new ResourceServer(new \Guzzle\Http\Client());
-        $rs->setAccessTokenQueryParameter("003");
-        $rs->setAuthorizationHeader("Bearer 003");
+        $rs->verifyToken();
     }
 
     /**

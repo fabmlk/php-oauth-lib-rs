@@ -24,7 +24,10 @@ class ResourceServer
     private $httpClient;
 
     /* @var string|null */
-    private $bearerToken;
+    private $authorizationHeader;
+
+    /* @var string|null */
+    private $accessTokenQueryParameter;
 
     /**
      * @param \Guzzle\Http\Client $httpClient
@@ -33,7 +36,8 @@ class ResourceServer
     public function __construct(\Guzzle\Http\Client $httpClient)
     {
         $this->httpClient = $httpClient;
-        $this->bearerToken = null;
+        $this->authorizationHeader = null;
+        $this->accessTokenQueryParameter = null;
     }
 
     public function setAuthorizationHeader($authorizationHeader)
@@ -50,15 +54,7 @@ class ResourceServer
         if (0 !== stripos($authorizationHeader, "Bearer ")) {
             return;
         }
-        // check if token was already set
-        if (null !== $this->bearerToken) {
-            throw new ResourceServerException(
-                "invalid_request",
-                "more than one method for including an access token used"
-            );
-        }
-
-        $this->bearerToken = substr($authorizationHeader, 7);
+        $this->authorizationHeader = substr($authorizationHeader, 7);
     }
 
     public function setAccessTokenQueryParameter($accessTokenQueryParameter)
@@ -71,27 +67,33 @@ class ResourceServer
         if (0 >= strlen($accessTokenQueryParameter)) {
             return;
         }
-        // check if token was already set
-        if (null !== $this->bearerToken) {
+        $this->accessTokenQueryParameter = $accessTokenQueryParameter;
+    }
+
+    public function verifyToken()
+    {
+        // one type should at least be set
+        if (null === $this->authorizationHeader && null === $this->accessTokenQueryParameter) {
+            throw new ResourceServerException("no_token", "missing token");
+        }
+        // but not both
+        if (null !== $this->authorizationHeader && null !== $this->accessTokenQueryParameter) {
             throw new ResourceServerException(
                 "invalid_request",
                 "more than one method for including an access token used"
             );
         }
-
-        $this->bearerToken = $accessTokenQueryParameter;
-    }
-
-    public function verifyToken()
-    {
-        if (null === $this->bearerToken) {
-            throw new ResourceServerException("no_token", "missing token");
+        if (null !== $this->authorizationHeader) {
+            $bearerToken = $this->authorizationHeader;
+        } else {
+            $bearerToken = $this->accessTokenQueryParameter;
         }
-        $this->validateTokenSyntax($this->bearerToken);
+
+        $this->validateTokenSyntax($bearerToken);
 
         try {
             $request = $this->httpClient->get();
-            $request->getQuery()->add("token", $this->bearerToken);
+            $request->getQuery()->add("token", $bearerToken);
             $response = $request->send();
 
             $responseData = $response->json();

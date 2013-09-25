@@ -1,5 +1,10 @@
 # Release History
 
+## 0.6.1
+* ResourceServerException for using both setAuthorizationHeader() and 
+  setAccessTokenQueryParameter() is now thrown in verifyToken() instead of in 
+  the setters.
+
 ## 0.6.0
 * Again, API change, ResourceServerException will be thrown if token is not
   active, or when it expired

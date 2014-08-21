@@ -18,6 +18,8 @@
 
 namespace fkooman\OAuth\ResourceServer;
 
+use fkooman\OAuth\Common\Scope;
+
 class TokenIntrospection
 {
     private $response;
@@ -86,10 +88,17 @@ class TokenIntrospection
      * OPTIONAL.  A space-separated list of strings representing the
      * scopes associated with this token, in the format described in
      * Section 3.3 of OAuth 2.0 [RFC6749].
+     *
+     * @return fkooman\OAuth\Common\Scope
      */
     public function getScope()
     {
-        return $this->getKeyValue('scope');
+        $scopeValue = $this->getKeyValue('scope');
+        if (false === $scopeValue) {
+            return new Scope();
+        }
+
+        return new Scope($scopeValue);
     }
 
     /**

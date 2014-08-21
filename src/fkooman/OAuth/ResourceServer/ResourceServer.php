@@ -31,7 +31,7 @@ class ResourceServer
 
     /**
      * @param \Guzzle\Http\Client $httpClient
-     *          the client pointing to the introspection endpoint
+     *                                        the client pointing to the introspection endpoint
      */
     public function __construct(\Guzzle\Http\Client $httpClient)
     {

@@ -1,5 +1,9 @@
 # Release History
 
+## 0.7.0
+* Switch to using fkooman/oauth-common for Scope handling
+* Rename package to fkooman/oauth-rs
+
 ## 0.6.1
 * ResourceServerException for using both setAuthorizationHeader() and 
   setAccessTokenQueryParameter() is now thrown in verifyToken() instead of in 

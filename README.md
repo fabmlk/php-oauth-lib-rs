@@ -19,17 +19,13 @@ Licensed under the Apache License, Version 2.0;
 # API
 Using the library is straightforward, you can install it in your project using
 [Composer](http://www.getcomposer.org) and add this library to your `requires`
-in `composer.json`:
-
-    $ php composer.phar require fkooman/php-oauth-lib-rs dev-master
-
-Or of course any of the released versions by tag.
+in `composer.json`.
 
 To use the API:
 
     $resourceServer = new ResourceServer(
         new Client(
-            "http://localhost/oauth/php-oauth/introspect.php"
+            "https://www.example.org/php-oauth-as/introspect.php"
         )
     );
 
@@ -91,6 +87,7 @@ This is a full example using this library.
 
     use fkooman\OAuth\ResourceServer\ResourceServer;
     use fkooman\OAuth\ResourceServer\ResourceServerException;
+    use fkooman\OAuth\Common\Scope;
 
     use Guzzle\Http\Client;
 
@@ -98,7 +95,7 @@ This is a full example using this library.
         // initialize the Resource Server, point it to introspection endpoint
         $resourceServer = new ResourceServer(
             new Client(
-                "http://localhost/oauth/php-oauth/introspect.php"
+                "https://www.example.org/php-oauth-as/introspect.php"
             )
         );
 
@@ -117,8 +114,7 @@ This is a full example using this library.
         // NOTE: only getActive() is required to be available, any of the other
         // introspection method objects can return "false" when not provided
         // by the introspection endpoint, so you MUST check for that!
-        $scope = explode(" ", $tokenIntrospection->getScope());
-        if (!in_array("foo", $scope)) {
+        if (!$tokenIntrospection->getScope()->hasScope(new Scope("foo"))) {
             throw new ResourceServerException("insufficient_scope", "scope 'foo' required");
         }
         $output = array("user_id" => $tokenIntrospection->getSub());
@@ -158,15 +154,6 @@ following Apache configuration snippet:
 
 That will make `HTTP_AUTHORIZATION` available in `$_SERVER`. If you use some
 framework it may already take care of this for you.
-
-# API Documentation
-The API documenation can be generated using
-[Sami](http://sami.sensiolabs.org/), Sami is part of the `require-dev` section
-in the Composer file.
-
-    $ php vendor/bin/sami.php update doc/php-oauth-lib-rs.php
-
-This will output HTML in the `build/` directory.
 
 # Tests
 In order to run the tests you can use [PHPUnit](http://phpunit.de). You can run 

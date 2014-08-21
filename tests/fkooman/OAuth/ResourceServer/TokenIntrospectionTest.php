@@ -18,6 +18,8 @@
 
 namespace fkooman\OAuth\ResourceServer;
 
+use fkooman\OAuth\Common\Scope;
+
 class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
 {
     public function testNotActive()
@@ -38,7 +40,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
                 "sub" => "foo",
                 "client_id" => "bar",
                 "aud" => "foobar",
-                "scope" => "foo bar baz",
+                "scope" => array("foo", "bar", "baz"),
                 "token_type" => "bearer",
                 "x-ext" => array("proprietary", "extension", "data")
             )
@@ -49,7 +51,17 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals("foo", $t->getSub());
         $this->assertEquals("bar", $t->getClientId());
         $this->assertEquals("foobar", $t->getAud());
-        $this->assertEquals("foo bar baz", $t->getScope());
+        $this->assertTrue(
+            $t->getScope()->equals(
+                new Scope(
+                    array(
+                        "foo",
+                        "bar",
+                        "baz"
+                    )
+                )
+            )
+        );
         $this->assertEquals("bearer", $t->getTokenType());
         $token = $t->getToken();
         $this->assertEquals(array("proprietary", "extension", "data"), $token["x-ext"]);

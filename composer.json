@@ -13,12 +13,10 @@
     },
     "description": "Library for implementing OAuth 2.0 resource servers",
     "license": "Apache-2.0",
-    "name": "fkooman/php-oauth-lib-rs",
+    "name": "fkooman/oauth-rs",
     "require": {
-        "guzzle/guzzle": "3.7.*",
+        "fkooman/oauth-common": "0.5.*",
+        "guzzle/guzzle": "~3.7",
         "php": ">=5.3.3"
-    },
-    "require-dev": {
-        "sami/sami": "v1.1"
     }
 }

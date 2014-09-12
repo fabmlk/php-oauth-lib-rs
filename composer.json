@@ -16,7 +16,7 @@
     "name": "fkooman/oauth-rs",
     "require": {
         "fkooman/oauth-common": "0.5.*",
-        "guzzle/guzzle": "~3.7",
+        "guzzle/guzzle": "~3.9",
         "php": ">=5.3.3"
     }
 }

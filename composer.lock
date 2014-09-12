@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "ca529e29604148c883688c70b5bd153f",
+    "hash": "c7d056b3d04eba25096d2132520c0a93",
     "packages": [
         {
             "name": "fkooman/oauth-common",
@@ -137,7 +137,7 @@
         },
         {
             "name": "symfony/event-dispatcher",
-            "version": "v2.5.3",
+            "version": "v2.5.4",
             "target-dir": "Symfony/Component/EventDispatcher",
             "source": {
                 "type": "git",

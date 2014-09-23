@@ -1,5 +1,8 @@
 # Release History
 
+## 0.7.1
+* Fix Scope handling
+
 ## 0.7.0
 * Switch to using fkooman/oauth-common for Scope handling
 * Rename package to fkooman/oauth-rs

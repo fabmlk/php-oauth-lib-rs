@@ -238,4 +238,16 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
         $rs->setAccessTokenQueryParameter(",./'_=09211#4$");
         $introspection = $rs->verifyToken();
     }
+
+    public function testScopeResponse()
+    {
+        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
+        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": true, "scope": "foo:rw bar:r"}'));
+        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
+        $client->addSubscriber($plugin);
+        $rs = new ResourceServer($client);
+        $rs->setAuthorizationHeader("Bearer 001");
+        $v = $rs->verifyToken();
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $v);
+    }
 }

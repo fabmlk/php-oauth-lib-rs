@@ -5,7 +5,7 @@
 %global github_name      php-oauth-lib-rs
 
 Name:       php-%{composer_vendor}-%{composer_project}
-Version:    0.7.0
+Version:    0.7.1
 Release:    1%{?dist}
 Summary:    Resource Server library for OAuth 2.0 services written in PHP
 
@@ -44,5 +44,8 @@ cp -pr src/* ${RPM_BUILD_ROOT}%{_datadir}/php
 %doc README.md CHANGES.md COPYING composer.json
 
 %changelog
+* Tue Sep 23 2014 François Kooman <fkooman@tuxed.net> - 0.7.1-1
+- update to 0.7.1
+
 * Fri Sep 12 2014 François Kooman <fkooman@tuxed.net> - 0.7.0-1
 - initial package

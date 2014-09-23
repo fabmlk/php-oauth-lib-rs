@@ -40,7 +40,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
                 "sub" => "foo",
                 "client_id" => "bar",
                 "aud" => "foobar",
-                "scope" => array("foo", "bar", "baz"),
+                "scope" => "foo bar baz",
                 "token_type" => "bearer",
                 "x-ext" => array("proprietary", "extension", "data")
             )

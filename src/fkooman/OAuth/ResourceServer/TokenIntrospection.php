@@ -52,6 +52,11 @@ class TokenIntrospection
             }
         }
 
+        // check whether provided scope is an array
+        if (isset($response['scope']) && !is_string($response['scope'])) {
+                throw new TokenIntrospectionException("scope must be string");
+        }
+
         $this->response = $response;
     }
 
@@ -98,7 +103,7 @@ class TokenIntrospection
             return new Scope();
         }
 
-        return new Scope($scopeValue);
+        return Scope::fromString($scopeValue);
     }
 
     /**

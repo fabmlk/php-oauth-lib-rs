@@ -54,7 +54,7 @@ class TokenIntrospection
 
         // check whether provided scope is an array
         if (isset($response['scope']) && !is_string($response['scope'])) {
-                throw new TokenIntrospectionException("scope must be string");
+            throw new TokenIntrospectionException("scope must be string");
         }
 
         $this->response = $response;

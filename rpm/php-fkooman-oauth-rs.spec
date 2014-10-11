@@ -19,7 +19,7 @@ Provides:   php-composer(%{composer_vendor}/%{composer_project}) = %{version}
 
 Requires:   php-composer(fkooman/oauth-common) >= 0.5.0
 Requires:   php-composer(fkooman/oauth-common) < 0.6.0
-Requires:   php-pear(guzzlephp.org/pear/Guzzle) >= 3.8.0
+Requires:   php-pear(guzzlephp.org/pear/Guzzle) >= 3.9.0
 Requires:   php-pear(guzzlephp.org/pear/Guzzle) < 4.0
 
 Requires:   php >= 5.3.3

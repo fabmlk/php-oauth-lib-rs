@@ -42,7 +42,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
                 "aud" => "foobar",
                 "scope" => "foo bar baz",
                 "token_type" => "bearer",
-                "x-ext" => array("proprietary", "extension", "data")
+                "x-ext" => array("proprietary", "extension", "data"),
             )
         );
         $this->assertTrue($t->getActive());
@@ -57,7 +57,7 @@ class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
                     array(
                         "foo",
                         "bar",
-                        "baz"
+                        "baz",
                     )
                 )
             )

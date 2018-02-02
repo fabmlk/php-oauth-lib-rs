@@ -20,7 +20,7 @@ namespace fkooman\OAuth\ResourceServer;
 
 use fkooman\OAuth\Common\Scope;
 
-class TokenIntrospectionTest extends \PHPUnit_Framework_TestCase
+class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
 {
     public function testNotActive()
     {

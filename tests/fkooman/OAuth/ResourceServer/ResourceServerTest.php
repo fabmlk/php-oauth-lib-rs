@@ -18,17 +18,25 @@
 
 namespace fkooman\OAuth\ResourceServer;
 
-class ResourceServerTest extends \PHPUnit_Framework_TestCase
+class ResourceServerTest extends \PHPUnit\Framework\TestCase
 {
+    private function createIntrospectionRequestFactory()
+    {
+        return function ($token) {
+            $request = new \GuzzleHttp\Psr7\Request('POST', '/introspect');
+
+            return $request->withBody(\GuzzleHttp\Psr7\stream_for(http_build_query([ 'access_token' => $token])));
+        };
+    }
+
     public function testValidToken()
     {
-        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": true}'));
-        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
+        $mock = new \GuzzleHttp\Handler\MockHandler([new \GuzzleHttp\Psr7\Response(200, [], '{"active": true}')]);
+        $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken());
+
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken($this->createIntrospectionRequestFactory()));
     }
 
     /**
@@ -37,30 +45,22 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testNonActiveToken()
     {
-        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": false}'));
-        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
+        $mock = new \GuzzleHttp\Handler\MockHandler([new \GuzzleHttp\Psr7\Response(200, [], '{"active": false}')]);
+        $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-        $rs->verifyToken();
+        $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     public function testNonExpiredToken()
     {
-        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(
-            new \Guzzle\Http\Message\Response(
-                200,
-                null,
-                sprintf('{"active": true, "exp": %d}', time() + 3600)
-            )
-        );
-        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            new \GuzzleHttp\Psr7\Response(200, [], sprintf('{"active": true, "exp": %d}', time() + 3600))
+        ]);
+        $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken());
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken($this->createIntrospectionRequestFactory()));
     }
 
     /**
@@ -69,30 +69,24 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testExpiredToken()
     {
-        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(
-            new \Guzzle\Http\Message\Response(
-                200,
-                null,
-                sprintf('{"active": true, "exp": %d}', time() - 3600)
-            )
-        );
-        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            new \GuzzleHttp\Psr7\Response(200, [], sprintf('{"active": true, "exp": %d}', time() - 3600))
+        ]);
+        $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-        $rs->verifyToken();
+        $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     public function testValidResponseSettingQueryParameter()
     {
-        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": true}'));
-        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            new \GuzzleHttp\Psr7\Response(200, [], '{"active": true}')
+        ]);
+        $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAccessTokenQueryParameter("001");
-        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken());
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken($this->createIntrospectionRequestFactory()));
     }
 
     /**
@@ -101,13 +95,13 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testNoJsonResponse()
     {
-        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, 'BROKEN'));
-        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            new \GuzzleHttp\Psr7\Response(200, [], 'BROKEN')
+        ]);
+        $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-        $rs->verifyToken();
+        $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -116,13 +110,13 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testNoJsonArrayResponse()
     {
-        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, 'true'));
-        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            new \GuzzleHttp\Psr7\Response(200, [], 'true')
+        ]);
+        $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-        $rs->verifyToken();
+        $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -131,13 +125,13 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testErrorResponseCode()
     {
-        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new \Guzzle\Http\Message\Response(404, null, 'Not Found'));
-        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            new \GuzzleHttp\Psr7\Response(404, [], 'Not Found')
+        ]);
+        $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-        $rs->verifyToken();
+        $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -146,10 +140,10 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testMultipleTokenMethods()
     {
-        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs = new ResourceServer(new \GuzzleHttp\Client());
         $rs->setAuthorizationHeader("Bearer 003");
         $rs->setAccessTokenQueryParameter("003");
-        $rs->verifyToken();
+        $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -158,8 +152,8 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testNoTokenMethods()
     {
-        $rs = new ResourceServer(new \Guzzle\Http\Client());
-        $introspection = $rs->verifyToken();
+        $rs = new ResourceServer(new \GuzzleHttp\Client());
+        $introspection = $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -168,9 +162,9 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testNotBearerAuthorizationHeader()
     {
-        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs = new ResourceServer(new \GuzzleHttp\Client());
         $rs->setAuthorizationHeader("Basic Zm9vOmJhcg==");
-        $introspection = $rs->verifyToken();
+        $introspection = $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -179,9 +173,9 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testWrongAuthorizationHeader()
     {
-        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs = new ResourceServer(new \GuzzleHttp\Client());
         $rs->setAuthorizationHeader("Foo");
-        $introspection = $rs->verifyToken();
+        $introspection = $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -190,9 +184,9 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testNoStringAuthorizationHeader()
     {
-        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs = new ResourceServer(new \GuzzleHttp\Client());
         $rs->setAuthorizationHeader(456);
-        $introspection = $rs->verifyToken();
+        $introspection = $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -201,9 +195,9 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testEmptyStringAuthorizationHeader()
     {
-        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs = new ResourceServer(new \GuzzleHttp\Client());
         $rs->setAuthorizationHeader("Bearer ");
-        $introspection = $rs->verifyToken();
+        $introspection = $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -212,9 +206,9 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testEmptyStringAccessTokenQueryParameter()
     {
-        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs = new ResourceServer(new \GuzzleHttp\Client());
         $rs->setAccessTokenQueryParameter("");
-        $introspection = $rs->verifyToken();
+        $introspection = $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -223,9 +217,9 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testNoStringAccessTokenQueryParameter()
     {
-        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs = new ResourceServer(new \GuzzleHttp\Client());
         $rs->setAccessTokenQueryParameter(123);
-        $introspection = $rs->verifyToken();
+        $introspection = $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     /**
@@ -234,20 +228,20 @@ class ResourceServerTest extends \PHPUnit_Framework_TestCase
      */
     public function testInvalidTokenCharacters()
     {
-        $rs = new ResourceServer(new \Guzzle\Http\Client());
+        $rs = new ResourceServer(new \GuzzleHttp\Client());
         $rs->setAccessTokenQueryParameter(",./'_=09211#4$");
-        $introspection = $rs->verifyToken();
+        $introspection = $rs->verifyToken($this->createIntrospectionRequestFactory());
     }
 
     public function testScopeResponse()
     {
-        $plugin = new \Guzzle\Plugin\Mock\MockPlugin();
-        $plugin->addResponse(new \Guzzle\Http\Message\Response(200, null, '{"active": true, "scope": "foo:rw bar:r"}'));
-        $client = new \Guzzle\Http\Client("https://auth.example.org/introspect");
-        $client->addSubscriber($plugin);
+        $mock = new \GuzzleHttp\Handler\MockHandler([
+            new \GuzzleHttp\Psr7\Response(200, [], '{"active": true, "scope": "foo:rw bar:r"}')
+        ]);
+        $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-        $v = $rs->verifyToken();
+        $v =  $rs->verifyToken($this->createIntrospectionRequestFactory());
         $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $v);
     }
 }

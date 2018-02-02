@@ -18,6 +18,7 @@
 
 namespace fkooman\OAuth\ResourceServer;
 
+
 class ResourceServer
 {
     /* @var \Guzzle\Http\Client */
@@ -30,14 +31,12 @@ class ResourceServer
     private $accessTokenQueryParameter;
 
     /**
-     * @param \Guzzle\Http\Client $httpClient
-     *                                        the client pointing to the introspection endpoint
+     * @param \GuzzleHttp\Client $httpClient
+     *                           the client pointing to the introspection endpoint
      */
-    public function __construct(\Guzzle\Http\Client $httpClient)
+    public function __construct(\GuzzleHttp\Client $httpClient)
     {
         $this->httpClient = $httpClient;
-        $this->authorizationHeader = null;
-        $this->accessTokenQueryParameter = null;
     }
 
     public function setAuthorizationHeader($authorizationHeader)
@@ -70,7 +69,7 @@ class ResourceServer
         $this->accessTokenQueryParameter = $accessTokenQueryParameter;
     }
 
-    public function verifyToken()
+    public function verifyToken(\Closure $introspectionRequestFactory)
     {
         // one type should at least be set
         if (null === $this->authorizationHeader && null === $this->accessTokenQueryParameter) {
@@ -91,12 +90,17 @@ class ResourceServer
 
         $this->validateTokenSyntax($bearerToken);
 
-        try {
-            $request = $this->httpClient->get();
-            $request->getQuery()->add("token", $bearerToken);
-            $response = $request->send();
+        $request = $introspectionRequestFactory($bearerToken);
+        if (!$request instanceof \Psr\Http\Message\RequestInterface) {
+            throw new \Guzzle\Common\Exception\UnexpectedValueException(
+                sprintf('Introspection request expected to be an instance of %s', \Psr\Http\Message\RequestInterface::class)
+            );
+        }
 
-            $responseData = $response->json();
+        try {
+            $response = $this->httpClient->send($request);
+            $responseData = json_decode($response->getBody(), true);
+
             if (!is_array($responseData)) {
                 throw new ResourceServerException(
                     "internal_server_error",
@@ -118,13 +122,27 @@ class ResourceServer
             }
 
             return $tokenIntrospection;
-        } catch (\Guzzle\Common\Exception\RuntimeException $e) {
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
             // error when contacting endpoint, or no JSON data returned
             throw new ResourceServerException(
                 "internal_server_error",
                 "unable to contact introspection endpoint or malformed response data"
             );
         }
+    }
+
+    public function resolveProfile(\Psr\Http\Message\RequestInterface $profileRequest)
+    {
+        try {
+            $response = $this->httpClient->send($profileRequest);
+        } catch (\Guzzle\Common\Exception\RuntimeException $e) {
+            throw new ResourceServerException(
+                "internal_server_error",
+                "unable to contact profile endpoint"
+            );
+        }
+
+        return $response->getBody();
     }
 
     private function validateTokenSyntax($token)

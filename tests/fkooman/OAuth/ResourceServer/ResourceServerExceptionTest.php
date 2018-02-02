@@ -18,7 +18,7 @@
 
 namespace fkooman\OAuth\ResourceServer;
 
-class ResourceServerExceptionTest extends \PHPUnit_Framework_TestCase
+class ResourceServerExceptionTest extends \PHPUnit\Framework\TestCase
 {
     public function testBasic()
     {

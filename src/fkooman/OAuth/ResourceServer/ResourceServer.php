@@ -69,7 +69,7 @@ class ResourceServer
         $this->accessTokenQueryParameter = $accessTokenQueryParameter;
     }
 
-    public function verifyToken(\Closure $introspectionRequestFactory)
+    public function verifyToken(\Closure $introspectionRequestFactory, \Closure $tokenIntrospectionFactory = null)
     {
         // one type should at least be set
         if (null === $this->authorizationHeader && null === $this->accessTokenQueryParameter) {
@@ -92,7 +92,7 @@ class ResourceServer
 
         $request = $introspectionRequestFactory($bearerToken);
         if (!$request instanceof \Psr\Http\Message\RequestInterface) {
-            throw new \Guzzle\Common\Exception\UnexpectedValueException(
+            throw new \UnexpectedValueException(
                 sprintf('Introspection request expected to be an instance of %s', \Psr\Http\Message\RequestInterface::class)
             );
         }
@@ -108,17 +108,20 @@ class ResourceServer
                 );
             }
 
-            $tokenIntrospection = new TokenIntrospection($responseData);
+            $tokenIntrospection = $tokenIntrospectionFactory ? $tokenIntrospectionFactory($responseData) : new DefaultTokenIntrospection($responseData);
+            if (!$tokenIntrospection instanceof AbstractTokenIntrospection) {
+                throw new \UnexpectedValueException(
+                    sprintf('Token introspection expected to be an instance of %s', AbstractTokenIntrospection::class)
+                );
+            }
 
             // check if the token was active
-            if (!$tokenIntrospection->getActive()) {
+            if (!$tokenIntrospection->isActive()) {
                 throw new ResourceServerException("invalid_token", "the access token is not active");
             }
             // check if it was not expired
-            if (false !== $tokenIntrospection->getExpiresAt()) {
-                if (time() > $tokenIntrospection->getExpiresAt()) {
-                    throw new ResourceServerException("invalid_token", "the access token expired");
-                }
+            if ($tokenIntrospection->getExpiresAt() && $tokenIntrospection->isExpired()) {
+                throw new ResourceServerException("invalid_token", "the access token expired");
             }
 
             return $tokenIntrospection;

@@ -35,8 +35,7 @@ class ResourceServerTest extends \PHPUnit\Framework\TestCase
         $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-
-        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken($this->createIntrospectionRequestFactory()));
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\AbstractTokenIntrospection", $rs->verifyToken($this->createIntrospectionRequestFactory()));
     }
 
     /**
@@ -60,7 +59,7 @@ class ResourceServerTest extends \PHPUnit\Framework\TestCase
         $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
-        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken($this->createIntrospectionRequestFactory()));
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\AbstractTokenIntrospection", $rs->verifyToken($this->createIntrospectionRequestFactory()));
     }
 
     /**
@@ -86,7 +85,7 @@ class ResourceServerTest extends \PHPUnit\Framework\TestCase
         $client = new \GuzzleHttp\Client(['base_uri' => "https://auth.example.org", 'handler' => \GuzzleHttp\HandlerStack::create($mock)]);
         $rs = new ResourceServer($client);
         $rs->setAccessTokenQueryParameter("001");
-        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $rs->verifyToken($this->createIntrospectionRequestFactory()));
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\AbstractTokenIntrospection", $rs->verifyToken($this->createIntrospectionRequestFactory()));
     }
 
     /**
@@ -242,6 +241,6 @@ class ResourceServerTest extends \PHPUnit\Framework\TestCase
         $rs = new ResourceServer($client);
         $rs->setAuthorizationHeader("Bearer 001");
         $v =  $rs->verifyToken($this->createIntrospectionRequestFactory());
-        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\TokenIntrospection", $v);
+        $this->assertInstanceOf("fkooman\\OAuth\\ResourceServer\\AbstractTokenIntrospection", $v);
     }
 }

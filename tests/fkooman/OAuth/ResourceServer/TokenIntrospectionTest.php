@@ -24,7 +24,7 @@ class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
 {
     public function testNotActive()
     {
-        $t = new TokenIntrospection(array("active" => false));
+        $t = new DefaultTokenIntrospection(array("active" => false));
         $this->assertFalse($t->getActive());
     }
 
@@ -32,7 +32,7 @@ class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
     {
         $now = time();
 
-        $t = new TokenIntrospection(
+        $t = new DefaultTokenIntrospection(
             array(
                 "active" => true,
                 "exp" => $now + 1000,
@@ -69,7 +69,7 @@ class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
 
     public function testActive()
     {
-        $t = new TokenIntrospection(array("active" => true));
+        $t = new DefaultTokenIntrospection(array("active" => true));
         $this->assertTrue($t->getActive());
         // non exiting key should return false
         $this->assertFalse($t->getSub());
@@ -81,7 +81,7 @@ class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
      */
     public function testMissingActive()
     {
-        $t = new TokenIntrospection(array());
+        $t = new DefaultTokenIntrospection(array());
     }
 
     /**
@@ -90,7 +90,7 @@ class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
      */
     public function testIssueTimeInFuture()
     {
-        $t = new TokenIntrospection(array("active" => true, "iat" => time()+1000));
+        $t = new DefaultTokenIntrospection(array("active" => true, "iat" => time()+1000));
     }
 
     /**
@@ -99,7 +99,7 @@ class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
      */
     public function testExpiresBeforeIssued()
     {
-        $t = new TokenIntrospection(array("active" => true, "iat" => time()-500, "exp" => time()-1000));
+        $t = new DefaultTokenIntrospection(array("active" => true, "iat" => time()-500, "exp" => time()-1000));
     }
 
     /**
@@ -108,7 +108,7 @@ class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
      */
     public function testNegativeIssueTime()
     {
-        $t = new TokenIntrospection(array("active" => true, "iat" => -4));
+        $t = new DefaultTokenIntrospection(array("active" => true, "iat" => -4));
     }
 
     /**
@@ -117,7 +117,7 @@ class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
      */
     public function testNonIntIssueTime()
     {
-        $t = new TokenIntrospection(array("active" => true, "iat" => "1234567"));
+        $t = new DefaultTokenIntrospection(array("active" => true, "iat" => "1234567"));
     }
 
     /**
@@ -126,7 +126,7 @@ class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
      */
     public function testNonIntExpiryTime()
     {
-        $t = new TokenIntrospection(array("active" => true, "exp" => "1234567"));
+        $t = new DefaultTokenIntrospection(array("active" => true, "exp" => "1234567"));
     }
 
     /**
@@ -135,6 +135,6 @@ class TokenIntrospectionTest extends \PHPUnit\Framework\TestCase
      */
     public function testNegativeExpiryTime()
     {
-        $t = new TokenIntrospection(array("active" => true, "exp" => -4));
+        $t = new DefaultTokenIntrospection(array("active" => true, "exp" => -4));
     }
 }

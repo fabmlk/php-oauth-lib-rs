@@ -1,64 +1,52 @@
 <?php
 
-/**
- *  Copyright 2013 François Kooman <fkooman@tuxed.net>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 namespace fkooman\OAuth\ResourceServer;
 
 use fkooman\OAuth\Common\Scope;
 
-class TokenIntrospection
+
+abstract class AbstractTokenIntrospection
 {
-    private $response;
+    protected $response;
 
     public function __construct(array $response)
     {
-        if (!isset($response['active']) || !is_bool($response['active'])) {
-            throw new TokenIntrospectionException("active key should be set and its value a boolean");
-        }
-
-        if (isset($response['exp']) && (!is_int($response['exp']) || 0 > $response['exp'])) {
-            throw new TokenIntrospectionException("exp value must be positive integer");
-        }
-
-        if (isset($response['iat']) && (!is_int($response['iat']) || 0 > $response['iat'])) {
-            throw new TokenIntrospectionException("iat value must be positive integer");
-        }
-
-        // check whether token was not issued in the future
-        if (isset($response['iat'])) {
-            if (time() < $response['iat']) {
-                throw new TokenIntrospectionException("token issued in the future");
-            }
-        }
-
-        // check whether token did not expire before it was issued
-        if (isset($response['exp']) && isset($response['iat'])) {
-            if ($response['exp'] < $response['iat']) {
-                throw new TokenIntrospectionException("token expired before it was issued");
-            }
-        }
-
-        // check whether provided scope is an array
-        if (isset($response['scope']) && !is_string($response['scope'])) {
-            throw new TokenIntrospectionException("scope must be string");
-        }
-
         $this->response = $response;
+
+        $this->checkActive();
+        $this->checkExpiresAt();
+        $this->checkIssuedAt();
     }
+
+    /**
+     * REQUIRED. Check active field is correctly formatted.
+     */
+    abstract public function checkActive();
+
+    /**
+     * REQUIRED. Check iat field is correctly formatted.
+     */
+    abstract public function checkExpiresAt();
+
+    /**
+     * REQUIRED. Check Scope is correctly formatted.
+     */
+    abstract public function checkIssuedAt();
+
+    /**
+     * REQUIRED. Check Scope is correctly formatted.
+     */
+    abstract public function checkScope();
+
+    /**
+     * @return bool
+     */
+    abstract public function isActive();
+
+    /**
+     * @return bool
+     */
+    abstract public function isExpired();
 
     /**
      * REQUIRED.  Boolean indicator of whether or not the presented
@@ -66,7 +54,7 @@ class TokenIntrospection
      */
     public function getActive()
     {
-        return $this->response['active'];
+        return isset($this->response['active']) ? $this->response['active'] : null;
     }
 
     /**
@@ -150,7 +138,7 @@ class TokenIntrospection
         return $this->response;
     }
 
-    private function getKeyValue($key)
+    protected function getKeyValue($key)
     {
         if (!isset($this->response[$key])) {
             return false;

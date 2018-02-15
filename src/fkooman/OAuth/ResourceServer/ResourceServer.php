@@ -125,7 +125,7 @@ class ResourceServer
             }
 
             return $tokenIntrospection;
-        } catch (\GuzzleHttp\Exception\ClientException $e) {
+        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
             // error when contacting endpoint, or no JSON data returned
             throw new ResourceServerException(
                 "internal_server_error",
@@ -134,18 +134,27 @@ class ResourceServer
         }
     }
 
+    /**
+     * Resolve profile data from a psr7 request.
+     * As there is no standard for response structure, the guzzle response is returned as is, without further parsing.
+     *
+     * @param \Psr\Http\Message\RequestInterface $profileRequest
+     * @return array|\Guzzle\Http\Message\Response|mixed|null|\Psr\Http\Message\ResponseInterface
+     *
+     * @throws ResourceServerException
+     */
     public function resolveProfile(\Psr\Http\Message\RequestInterface $profileRequest)
     {
         try {
             $response = $this->httpClient->send($profileRequest);
-        } catch (\Guzzle\Common\Exception\RuntimeException $e) {
+        } catch (\GuzzleHttp\Exception\GuzzleException $e) {
             throw new ResourceServerException(
                 "internal_server_error",
                 "unable to contact profile endpoint"
             );
         }
 
-        return $response->getBody();
+        return $response;
     }
 
     private function validateTokenSyntax($token)

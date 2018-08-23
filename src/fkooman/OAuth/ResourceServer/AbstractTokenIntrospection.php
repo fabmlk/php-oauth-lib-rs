@@ -4,11 +4,21 @@ namespace fkooman\OAuth\ResourceServer;
 
 use fkooman\OAuth\Common\Scope;
 
-
+/**
+ * Class AbstractTokenIntrospection.
+ */
 abstract class AbstractTokenIntrospection
 {
+    /**
+     * @var array
+     */
     protected $response;
 
+    /**
+     * AbstractTokenIntrospection constructor.
+     *
+     * @param array $response
+     */
     public function __construct(array $response)
     {
         $this->response = $response;
@@ -82,7 +92,8 @@ abstract class AbstractTokenIntrospection
      * scopes associated with this token, in the format described in
      * Section 3.3 of OAuth 2.0 [RFC6749].
      *
-     * @return fkooman\OAuth\Common\Scope
+     * @return Scope
+     * @throws \fkooman\OAuth\Common\Exception\ScopeException
      */
     public function getScope()
     {
@@ -138,6 +149,11 @@ abstract class AbstractTokenIntrospection
         return $this->response;
     }
 
+    /**
+     * @param $key
+     *
+     * @return bool|mixed
+     */
     protected function getKeyValue($key)
     {
         if (!isset($this->response[$key])) {

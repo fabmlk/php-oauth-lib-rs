@@ -18,6 +18,9 @@
 
 namespace fkooman\OAuth\ResourceServer;
 
+/**
+ * Class TokenIntrospectionException.
+ */
 class TokenIntrospectionException extends \Exception
 {
 }

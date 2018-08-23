@@ -18,12 +18,29 @@
 
 namespace fkooman\OAuth\ResourceServer;
 
+/**
+ * Class ResourceServerException.
+ */
 class ResourceServerException extends \Exception
 {
+    /**
+     * @var string
+     */
     private $description;
+
+    /**
+     * @var string
+     */
     private $realm;
 
-    public function __construct($message, $description, $code = 0, Exception $previous = null)
+    /**
+     * ResourceServerException constructor.
+     * @param                $message
+     * @param                $description
+     * @param int            $code
+     * @param \Exception|null $previous
+     */
+    public function __construct($message, $description, $code = 0, \Exception $previous = null)
     {
         $this->description = $description;
         $this->realm = "Resource Server";
@@ -31,11 +48,17 @@ class ResourceServerException extends \Exception
         parent::__construct($message, $code, $previous);
     }
 
+    /**
+     * @return string
+     */
     public function getDescription()
     {
         return $this->description;
     }
 
+    /**
+     * @param $resourceServerRealm
+     */
     public function setRealm($resourceServerRealm)
     {
         if (is_string($resourceServerRealm) && 0 < strlen($resourceServerRealm)) {
@@ -43,11 +66,17 @@ class ResourceServerException extends \Exception
         }
     }
 
+    /**
+     * @return string
+     */
     public function getRealm()
     {
         return $this->realm;
     }
 
+    /**
+     * @return int
+     */
     public function getStatusCode()
     {
         switch ($this->message) {
@@ -66,6 +95,9 @@ class ResourceServerException extends \Exception
         }
     }
 
+    /**
+     * @return null|string
+     */
     public function getAuthenticateHeader()
     {
         if ("internal_server_error" === $this->getMessage()) {

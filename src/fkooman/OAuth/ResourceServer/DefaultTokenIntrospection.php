@@ -18,8 +18,14 @@
 
 namespace fkooman\OAuth\ResourceServer;
 
+/**
+ * Class DefaultTokenIntrospection.
+ */
 class DefaultTokenIntrospection extends AbstractTokenIntrospection
 {
+    /**
+     * @throws TokenIntrospectionException
+     */
     public function checkActive()
     {
         if (!is_bool($this->getActive())) {
@@ -27,6 +33,9 @@ class DefaultTokenIntrospection extends AbstractTokenIntrospection
         }
     }
 
+    /**
+     * @throws TokenIntrospectionException
+     */
     public function checkExpiresAt()
     {
         $exp = $this->getExpiresAt();
@@ -41,6 +50,9 @@ class DefaultTokenIntrospection extends AbstractTokenIntrospection
         }
     }
 
+    /**
+     * @throws TokenIntrospectionException
+     */
     public function checkIssuedAt()
     {
         $iat = $this->getIssuedAt();
@@ -55,6 +67,9 @@ class DefaultTokenIntrospection extends AbstractTokenIntrospection
         }
     }
 
+    /**
+     * @throws TokenIntrospectionException
+     */
     public function checkScope()
     {
         // check whether provided scope is an array
@@ -63,11 +78,17 @@ class DefaultTokenIntrospection extends AbstractTokenIntrospection
         }
     }
 
+    /**
+     * @return bool|mixed|null
+     */
     public function isActive()
     {
         return $this->getActive();
     }
 
+    /**
+     * @return bool
+     */
     public function isExpired()
     {
         return time() > $this->getExpiresAt();
